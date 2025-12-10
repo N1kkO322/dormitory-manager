@@ -1,12 +1,25 @@
-import { createRootRoute, Outlet, redirect } from '@tanstack/react-router'
+import {
+	createRootRoute,
+	Outlet,
+	redirect,
+	useLocation,
+} from '@tanstack/react-router'
 import { auth, isPublicRoute } from '../lib/auth'
 import './../index.css'
 
-const RootLayout = () => (
-	<>
-		<Outlet />
-	</>
-)
+function RootLayout() {
+	const location = useLocation()
+
+	return (
+		// ⭐ Добавляем контейнер
+		<div className='page-container'>
+			{/* ⭐ Меняем key при смене страницы и добавляем класс анимации */}
+			<div key={location.pathname} className='page-fade-in'>
+				<Outlet />
+			</div>
+		</div>
+	)
+}
 
 export const Route = createRootRoute({
 	component: RootLayout,

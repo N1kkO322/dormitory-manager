@@ -24,12 +24,14 @@ function CatchAllRoute() {
 					backgroundColor: '#fff',
 					display: 'flex',
 					padding: '24px',
-					borderRadius: '56px',
+					borderRadius: '32px',
 					boxShadow: '#c3c3c3 0px 0px 20px 1px',
 				}}
 			>
 				<div style={{ width: '50%' }}>
-					<h1 style={{ fontSize: '260px', color: '#6060f0' }}>404</h1>
+					<h1 style={{ fontSize: '260px', color: '#6060f0' }}>
+						<i>404</i>
+					</h1>
 				</div>
 				<div
 					style={{

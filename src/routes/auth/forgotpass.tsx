@@ -20,7 +20,7 @@ function RouteComponent() {
 				<div
 					style={{
 						backgroundColor: '#fff',
-						borderRadius: '56px',
+						borderRadius: '32px',
 						padding: '56px',
 						width: '30dvw',
 						height: '100%',
