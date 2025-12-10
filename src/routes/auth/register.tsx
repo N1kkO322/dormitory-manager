@@ -1,10 +1,29 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { auth } from '../../lib/auth'
 
 export const Route = createFileRoute('/auth/register')({
 	component: RouteComponent,
 })
 
 function RouteComponent() {
+	const navigate = useNavigate()
+
+	const handleRegister = () => {
+		const testUser = {
+			id: '2',
+			email: 'newuser@mail.com',
+			fullName: 'Новый Пользователь',
+			role: 'student' as const,
+		}
+
+		auth.register('new-jwt-token', testUser)
+
+		console.log('✅ Регистрация выполнена!')
+		console.log('Пользователь:', auth.getUser())
+
+		navigate({ to: '/' })
+	}
+
 	return (
 		<>
 			<div
@@ -57,7 +76,9 @@ function RouteComponent() {
 						/>
 						<input type='text' placeholder='Пароль' className='auth-inputs' />
 					</div>
-					<button className='auth-btns'>Создать аккаунт</button>
+					<button className='auth-btns' onClick={handleRegister}>
+						Создать аккаунт
+					</button>
 					<div
 						style={{
 							display: 'flex',
