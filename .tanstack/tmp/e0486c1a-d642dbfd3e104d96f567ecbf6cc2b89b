@@ -17,7 +17,8 @@ import { Route as AuthForgotpassRouteImport } from './routes/auth/forgotpass'
 import { Route as AuthenticatedWashingRouteImport } from './routes/_authenticated/washing'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDutiesRouteImport } from './routes/_authenticated/duties'
-import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated/announcements'
+import { Route as AuthenticatedAnnouncementsIndexRouteImport } from './routes/_authenticated/announcements/index'
+import { Route as AuthenticatedAnnouncementsIdRouteImport } from './routes/_authenticated/announcements/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -58,77 +59,89 @@ const AuthenticatedDutiesRoute = AuthenticatedDutiesRouteImport.update({
   path: '/duties',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAnnouncementsRoute =
-  AuthenticatedAnnouncementsRouteImport.update({
-    id: '/announcements',
-    path: '/announcements',
+const AuthenticatedAnnouncementsIndexRoute =
+  AuthenticatedAnnouncementsIndexRouteImport.update({
+    id: '/announcements/',
+    path: '/announcements/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAnnouncementsIdRoute =
+  AuthenticatedAnnouncementsIdRouteImport.update({
+    id: '/announcements/$id',
+    path: '/announcements/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
-  '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/duties': typeof AuthenticatedDutiesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/announcements/$id': typeof AuthenticatedAnnouncementsIdRoute
+  '/announcements': typeof AuthenticatedAnnouncementsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
-  '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/duties': typeof AuthenticatedDutiesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/announcements/$id': typeof AuthenticatedAnnouncementsIdRoute
+  '/announcements': typeof AuthenticatedAnnouncementsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/duties': typeof AuthenticatedDutiesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/_authenticated/announcements/$id': typeof AuthenticatedAnnouncementsIdRoute
+  '/_authenticated/announcements/': typeof AuthenticatedAnnouncementsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/$'
-    | '/announcements'
     | '/duties'
     | '/profile'
     | '/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/announcements/$id'
+    | '/announcements'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
-    | '/announcements'
     | '/duties'
     | '/profile'
     | '/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/announcements/$id'
+    | '/announcements'
   id:
     | '__root__'
     | '/'
     | '/$'
     | '/_authenticated'
-    | '/_authenticated/announcements'
     | '/_authenticated/duties'
     | '/_authenticated/profile'
     | '/_authenticated/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/_authenticated/announcements/$id'
+    | '/_authenticated/announcements/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,28 +210,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDutiesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/announcements': {
-      id: '/_authenticated/announcements'
+    '/_authenticated/announcements/': {
+      id: '/_authenticated/announcements/'
       path: '/announcements'
       fullPath: '/announcements'
-      preLoaderRoute: typeof AuthenticatedAnnouncementsRouteImport
+      preLoaderRoute: typeof AuthenticatedAnnouncementsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/announcements/$id': {
+      id: '/_authenticated/announcements/$id'
+      path: '/announcements/$id'
+      fullPath: '/announcements/$id'
+      preLoaderRoute: typeof AuthenticatedAnnouncementsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedDutiesRoute: typeof AuthenticatedDutiesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedWashingRoute: typeof AuthenticatedWashingRoute
+  AuthenticatedAnnouncementsIdRoute: typeof AuthenticatedAnnouncementsIdRoute
+  AuthenticatedAnnouncementsIndexRoute: typeof AuthenticatedAnnouncementsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedDutiesRoute: AuthenticatedDutiesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedWashingRoute: AuthenticatedWashingRoute,
+  AuthenticatedAnnouncementsIdRoute: AuthenticatedAnnouncementsIdRoute,
+  AuthenticatedAnnouncementsIndexRoute: AuthenticatedAnnouncementsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

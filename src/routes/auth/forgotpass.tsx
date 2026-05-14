@@ -66,7 +66,7 @@ function RouteComponent() {
 							letterSpacing: '1px',
 						}}
 					>
-						Всомнили пароль?
+						Вспомнили пароль?
 						<Link
 							to='/auth/login'
 							style={{ color: '#6060f0', marginLeft: '8px' }}

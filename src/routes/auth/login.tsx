@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
+import type { User } from '../../lib/auth'
 import { auth } from '../../lib/auth'
 
 export const Route = createFileRoute('/auth/login')({
@@ -8,21 +10,32 @@ export const Route = createFileRoute('/auth/login')({
 function RouteComponent() {
 	const navigate = useNavigate()
 
-	const handleLogin = () => {
-		const testUser = {
-			id: '1',
-			email: 'test@mail.com',
-			fullName: 'Тест Пользователь',
-			role: 'student' as const,
+	const [email, setEmail] = useState('')
+	const [password, setPassword] = useState('')
+
+	const handleLogin = (e: React.FormEvent) => {
+		e.preventDefault()
+		if (email == 'q' && password == 'q') {
+			const adminUser: User = {
+				id: 'admin-1',
+				email: 'admin@dorm.ru',
+				role: 'employee',
+				isAdmin: true,
+				name: 'Администратор',
+			}
+			// const studentUser: User = {
+			// 	id: 'student-1',
+			// 	email: 'student@dorm.ru',
+			// 	role: 'student',
+			// 	isAdmin: false,
+			// 	name: 'Глеб',
+			// }
+			auth.login('admin-token', adminUser)
+			// auth.login('admin-token', studentUser)
+			navigate({ to: '/announcements' })
+		} else {
+			alert('Неверный email или пароль')
 		}
-
-		auth.login('test-jwt-token', testUser)
-
-		console.log('✅ Login выполнен!')
-		console.log('auth.isAuthenticated():', auth.isAuthenticated())
-		console.log('auth.getUser():', auth.getUser())
-
-		navigate({ to: '/' })
 	}
 	return (
 		<>
@@ -33,15 +46,18 @@ function RouteComponent() {
 					justifyContent: 'center',
 					alignItems: 'center',
 					margin: '0 auto',
-					width: '100%',
+					width: '100dvw',
 				}}
 			>
-				<div
+				<form
+					onSubmit={handleLogin}
 					style={{
 						backgroundColor: '#fff',
 						borderRadius: '32px',
 						padding: '56px',
 						width: '30dvw',
+						// width: '60%', Laptop
+						// width: '90%', Mobile
 						height: '100%',
 						display: 'flex',
 						flexDirection: 'column',
@@ -72,9 +88,21 @@ function RouteComponent() {
 							type='text'
 							placeholder='Электронная почта'
 							className='auth-inputs'
+							value={email}
+							onChange={e => setEmail(e.target.value)}
 						/>
-						<input type='text' placeholder='Пароль' className='auth-inputs' />
+						<input
+							type='text'
+							placeholder='Пароль'
+							className='auth-inputs'
+							value={password}
+							onChange={e => setPassword(e.target.value)}
+						/>
 					</div>
+
+					<button type='submit' className='auth-btns'>
+						Войти
+					</button>
 					<div
 						style={{
 							display: 'flex',
@@ -87,27 +115,7 @@ function RouteComponent() {
 							Не помню пароль
 						</Link>
 					</div>
-
-					<button className='auth-btns' onClick={handleLogin}>
-						Войти
-					</button>
-					<div
-						style={{
-							display: 'flex',
-							justifyContent: 'center',
-							marginTop: '20px',
-							letterSpacing: '1px',
-						}}
-					>
-						Нет аккаунта?
-						<Link
-							to='/auth/register'
-							style={{ color: '#6060f0', marginLeft: '8px' }}
-						>
-							Зарегистрироваться
-						</Link>
-					</div>
-				</div>
+				</form>
 			</div>
 		</>
 	)

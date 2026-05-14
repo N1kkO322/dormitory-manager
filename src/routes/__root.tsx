@@ -1,23 +1,20 @@
-import {
-	createRootRoute,
-	Outlet,
-	redirect,
-	useLocation,
-} from '@tanstack/react-router'
+import { MantineProvider } from '@mantine/core'
+import '@mantine/core/styles.css'
+import { createRootRoute, Outlet, redirect } from '@tanstack/react-router'
 import { auth, isPublicRoute } from '../lib/auth'
 import './../index.css'
 
 function RootLayout() {
-	const location = useLocation()
+	// const location = useLocation()
 
 	return (
-		// ⭐ Добавляем контейнер
-		<div className='page-container'>
-			{/* ⭐ Меняем key при смене страницы и добавляем класс анимации */}
-			<div key={location.pathname} className='page-fade-in'>
-				<Outlet />
+		<MantineProvider>
+			<div className='page-container'>
+				<div className='page-fade-in'>
+					<Outlet />
+				</div>
 			</div>
-		</div>
+		</MantineProvider>
 	)
 }
 
@@ -47,7 +44,7 @@ export const Route = createRootRoute({
 
 		if (isAuthenticated && isPublic) {
 			console.log(
-				'Пользователь уже авторизован. Перенаправляем с auth страниц.'
+				'Пользователь уже авторизован. Перенаправляем с auth страниц.',
 			)
 
 			const user = auth.getUser()

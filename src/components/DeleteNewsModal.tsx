@@ -1,0 +1,92 @@
+// components/DeleteNewsModal.tsx
+import { Modal } from '@mantine/core'
+import { AlertTriangle } from 'lucide-react'
+
+type DeleteNewsModalProps = {
+	opened: boolean
+	onClose: () => void
+	onConfirm: () => void
+	title: string
+}
+
+export function DeleteNewsModal({
+	opened,
+	onClose,
+	onConfirm,
+	title,
+}: DeleteNewsModalProps) {
+	return (
+		<Modal
+			opened={opened}
+			onClose={onClose}
+			title='Удаление новости'
+			size='lg'
+			centered
+		>
+			<div style={{ textAlign: 'center', padding: '20px 0' }}>
+				<AlertTriangle
+					size={48}
+					color='#e74c3c'
+					style={{ marginBottom: '16px' }}
+				/>
+
+				<p style={{ color: '#454652', marginBottom: '24px' }}>
+					Вы действительно хотите удалить новость <br />
+					<h3>"{title}"?</h3>
+				</p>
+
+				<div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+					<button
+						onClick={onClose}
+						style={{
+							padding: '10px 24px',
+							borderRadius: '8px',
+							border: '1px solid #D3E4FE',
+							backgroundColor: 'transparent',
+							color: '#454652',
+							cursor: 'pointer',
+							fontSize: '14px',
+							fontWeight: '500',
+							transition: 'all 0.2s',
+							width: '40%',
+						}}
+						onMouseEnter={e => {
+							e.currentTarget.style.backgroundColor = '#f5f5f5'
+						}}
+						onMouseLeave={e => {
+							e.currentTarget.style.backgroundColor = 'transparent'
+						}}
+					>
+						Отмена
+					</button>
+
+					<button
+						onClick={onConfirm}
+						style={{
+							padding: '10px 24px',
+							borderRadius: '8px',
+							border: 'none',
+							backgroundColor: '#e74c3c',
+							color: 'white',
+							cursor: 'pointer',
+							fontSize: '14px',
+							fontWeight: '500',
+							transition: 'all 0.2s',
+							width: '40%',
+						}}
+						onMouseEnter={e => {
+							e.currentTarget.style.backgroundColor = '#c0392b'
+							e.currentTarget.style.transform = 'translateY(-2px)'
+						}}
+						onMouseLeave={e => {
+							e.currentTarget.style.backgroundColor = '#e74c3c'
+							e.currentTarget.style.transform = 'translateY(0)'
+						}}
+					>
+						Да, удалить
+					</button>
+				</div>
+			</div>
+		</Modal>
+	)
+}

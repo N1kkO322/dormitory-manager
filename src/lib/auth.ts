@@ -2,6 +2,8 @@ export interface User {
 	id: string
 	email: string
 	role: 'student' | 'employee'
+	isAdmin?: boolean
+	name: string
 }
 
 export const auth = {
@@ -36,11 +38,6 @@ export const auth = {
 		console.log('Пользователь вышел из системы')
 	},
 
-	register: (token: string, user: User): void => {
-		auth.login(token, user)
-		console.log('Новый пользователь зарегистрирован', user.email)
-	},
-
 	isStudent: (): boolean => {
 		const user = auth.getUser()
 		return user?.role === 'student'
@@ -64,7 +61,7 @@ export const auth = {
 }
 
 export const isPublicRoute = (pathname: string): boolean => {
-	const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgotpass']
+	const publicRoutes = ['/auth/login', '/auth/forgotpass']
 
 	return publicRoutes.some(route => pathname.startsWith(route))
 }

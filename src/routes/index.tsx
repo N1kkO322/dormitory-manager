@@ -1,13 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { auth } from '../lib/auth'
 
 export const Route = createFileRoute('/')({
-	component: Index,
+	beforeLoad: () => {
+		if (auth.isAuthenticated()) {
+			throw redirect({ to: '/announcements' })
+		} else {
+			throw redirect({ to: '/auth/login' })
+		}
+	},
+	component: () => null,
 })
-
-function Index() {
-	return (
-		<div className='p-2'>
-			<h3>Welcome Home!</h3>
-		</div>
-	)
-}
