@@ -1,9 +1,30 @@
+// export interface User {
+// 	id: string
+// 	email: string
+// 	role: 'student' | 'employee'
+// 	isAdmin?: boolean
+// 	name: string
+// }
+
 export interface User {
-	id: string
+	id: number
 	email: string
 	role: 'student' | 'employee'
-	isAdmin?: boolean
 	name: string
+	surname: string
+	middleName?: string
+	phone: string
+	photo?: string
+	group?: string
+	floor?: number
+	wing?: 'male' | 'female'
+	block?: string
+	room?: string
+	emergencyContact?: {
+		name: string
+		relation: string
+		phone: string
+	}
 }
 
 export const auth = {

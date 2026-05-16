@@ -53,7 +53,7 @@ export const Route = createRootRoute({
 			if (user?.role === 'student') {
 				redirectTo = '/student'
 			} else if (user?.role === 'employee') {
-				redirectTo = '/employee'
+				redirectTo = '/announcements'
 			}
 
 			throw redirect({

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import axios from 'axios'
 import { WashingMachine, Wrench } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { ReportMachineModal } from '../../components/ReportMachineModal'
 
 type WashingMachineType = {
 	id: number
@@ -17,6 +18,7 @@ function RouteComponent() {
 	const [machines, setMachines] = useState<WashingMachineType[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+	const [problemModalOpened, setProblemModalOpened] = useState(false)
 
 	const freeCount = machines.filter(m => m.status === 'free').length
 	const busyCount = machines.filter(m => m.status === 'busy').length
@@ -133,6 +135,10 @@ function RouteComponent() {
 
 	return (
 		<>
+			<ReportMachineModal
+				opened={problemModalOpened}
+				onClose={() => setProblemModalOpened(false)}
+			/>
 			<div
 				style={{
 					display: 'flex',
@@ -335,6 +341,7 @@ function RouteComponent() {
 								Заметили неисправность машинки?
 							</h2>
 							<button
+								onClick={() => setProblemModalOpened(true)}
 								style={{
 									backgroundColor: '#6060f0',
 									color: '#fff',

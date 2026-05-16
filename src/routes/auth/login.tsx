@@ -15,24 +15,47 @@ function RouteComponent() {
 
 	const handleLogin = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (email == 'q' && password == 'q') {
-			const adminUser: User = {
-				id: 'admin-1',
-				email: 'admin@dorm.ru',
-				role: 'employee',
-				isAdmin: true,
-				name: 'Администратор',
-			}
-			// const studentUser: User = {
-			// 	id: 'student-1',
-			// 	email: 'student@dorm.ru',
-			// 	role: 'student',
-			// 	isAdmin: false,
-			// 	name: 'Глеб',
-			// }
-			auth.login('admin-token', adminUser)
-			// auth.login('admin-token', studentUser)
+
+		const studentUser: User = {
+			id: 1,
+			email: 'gleb.nikolaev.1980@mail.ru',
+			role: 'student',
+			surname: 'Николаев',
+			name: 'Глеб',
+			middleName: 'Сергеевич',
+			phone: '89115704580',
+			block: '801',
+			emergencyContact: {
+				name: 'Екатерина Червонцева',
+				phone: '89114902370',
+				relation: 'Мама',
+			},
+			floor: 8,
+			wing: 'male',
+			group: 'ИСТ-212',
+			photo:
+				'https://i.pinimg.com/736x/fd/92/b2/fd92b2cd01e556e9463db5f378264c01.jpg',
+			room: '901',
+		}
+
+		const adminUser: User = {
+			id: 2,
+			email: 'administratorDorm@mail.ru',
+			role: 'employee',
+			surname: 'Петровна',
+			name: 'Анна',
+			middleName: 'Олеговная',
+			phone: '89113698721',
+		}
+
+		if (email === 's' && password === 's') {
+			auth.login('token', studentUser)
 			navigate({ to: '/announcements' })
+			console.log('Студент вошёл:', studentUser)
+		} else if (email === 'a' && password === 'a') {
+			auth.login('token', adminUser)
+			navigate({ to: '/announcements' })
+			console.log('Админ вошёл:', adminUser)
 		} else {
 			alert('Неверный email или пароль')
 		}

@@ -146,9 +146,17 @@ function RouteComponent() {
 			<Modal
 				opened={opened}
 				onClose={close}
-				title='Добавить новость'
-				size='lg'
+				title='Добавление новости'
+				size='xl'
 				centered
+				radius={'16px'}
+				padding={'28px'}
+				styles={{
+					title: {
+						fontWeight: 'bold',
+						fontSize: '24px',
+					},
+				}}
 			>
 				<AddNewsModalContent onSuccess={refreshNews} onClose={close} />
 			</Modal>

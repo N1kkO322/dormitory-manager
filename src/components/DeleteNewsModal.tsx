@@ -16,13 +16,7 @@ export function DeleteNewsModal({
 	title,
 }: DeleteNewsModalProps) {
 	return (
-		<Modal
-			opened={opened}
-			onClose={onClose}
-			title='Удаление новости'
-			size='lg'
-			centered
-		>
+		<Modal opened={opened} onClose={onClose} size='lg' centered>
 			<div style={{ textAlign: 'center', padding: '20px 0' }}>
 				<AlertTriangle
 					size={48}
@@ -35,7 +29,15 @@ export function DeleteNewsModal({
 					<h3>"{title}"?</h3>
 				</p>
 
-				<div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+				<div
+					style={{
+						display: 'flex',
+						gap: '12px',
+						justifyContent: 'center',
+						marginTop: '48px',
+						width: '100%',
+					}}
+				>
 					<button
 						onClick={onClose}
 						style={{
@@ -48,7 +50,7 @@ export function DeleteNewsModal({
 							fontSize: '14px',
 							fontWeight: '500',
 							transition: 'all 0.2s',
-							width: '40%',
+							width: '45%',
 						}}
 						onMouseEnter={e => {
 							e.currentTarget.style.backgroundColor = '#f5f5f5'
@@ -72,7 +74,7 @@ export function DeleteNewsModal({
 							fontSize: '14px',
 							fontWeight: '500',
 							transition: 'all 0.2s',
-							width: '40%',
+							width: '45%',
 						}}
 						onMouseEnter={e => {
 							e.currentTarget.style.backgroundColor = '#c0392b'

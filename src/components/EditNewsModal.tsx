@@ -1,5 +1,5 @@
 // components/EditNewsModal.tsx
-import { Modal } from '@mantine/core'
+import { Checkbox, Input, Modal, Select, Textarea } from '@mantine/core'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 
@@ -76,49 +76,100 @@ export function EditNewsModal({
 		<Modal
 			opened={opened}
 			onClose={onClose}
-			title='Редактировать новость'
-			size='lg'
+			title='Редактирование новости'
+			size='xl'
 			centered
+			radius='16px'
+			padding='28px'
+			styles={{
+				title: {
+					fontWeight: 'bold',
+					fontSize: '24px',
+				},
+			}}
 		>
 			<form onSubmit={handleSubmit}>
-				<div style={{ marginBottom: '16px' }}>
-					<label
-						style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}
-					>
-						Тип новости
-					</label>
-					<select
-						value={formData.type}
-						onChange={e => setFormData({ ...formData, type: e.target.value })}
-						style={{
-							width: '100%',
-							padding: '12px',
-							borderRadius: '12px',
-							border: '1px solid #D3E4FE',
-							fontSize: '14px',
-						}}
-					>
-						<option value='Уведомление'>Уведомление</option>
-						<option value='Событие'>Событие</option>
-					</select>
+				<div
+					style={{
+						display: 'block',
+						marginBottom: '8px',
+						fontWeight: '500',
+						width: '100%',
+					}}
+				>
+					Тип новости
+				</div>
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						width: '100%',
+						alignItems: 'center',
+					}}
+				>
+					<div style={{ width: '45%' }}>
+						<Select
+							value={formData.type}
+							onChange={value => setFormData({ ...formData, type: value })}
+							data={[
+								{ value: 'Уведомление', label: 'Уведомление' },
+								{ value: 'Событие', label: 'Событие' },
+							]}
+							styles={{
+								input: {
+									width: '100%',
+									padding: '4px',
+									paddingLeft: '12px',
+									borderRadius: '12px',
+									border: '1px solid #D3E4FE',
+									fontSize: '14px',
+									height: 'auto',
+								},
+							}}
+						/>
+					</div>
+					<div style={{ width: '45%' }}>
+						<label
+							style={{
+								display: 'flex',
+								alignItems: 'flex-start',
+								gap: '16px',
+								cursor: 'pointer',
+								alignContent: 'center',
+							}}
+						>
+							<Checkbox
+								size={24}
+								checked={formData.priority === 'high'}
+								onChange={e => {
+									setFormData({
+										...formData,
+										priority: e.target.checked ? 'high' : 'medium',
+									})
+								}}
+								style={{
+									width: '18px',
+									height: '18px',
+								}}
+							/>
+							<span style={{ fontWeight: '500' }}>Высокий приоритет</span>
+						</label>
+					</div>
 				</div>
 
-				<div style={{ marginBottom: '16px' }}>
+				<div style={{ marginBottom: '16px', marginTop: '16px' }}>
 					<label
 						style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}
 					>
 						Заголовок
 					</label>
-					<input
-						type='text'
+					<Input
 						value={formData.title}
 						onChange={e => setFormData({ ...formData, title: e.target.value })}
 						required
 						style={{
 							width: '100%',
-							padding: '12px',
 							borderRadius: '12px',
-							border: '1px solid #D3E4FE',
 							fontSize: '14px',
 						}}
 					/>
@@ -130,51 +181,20 @@ export function EditNewsModal({
 					>
 						Содержание
 					</label>
-					<textarea
+					<Textarea
 						value={formData.content}
 						onChange={e =>
 							setFormData({ ...formData, content: e.target.value })
 						}
 						required
-						rows={6}
+						rows={9}
 						style={{
 							width: '100%',
-							padding: '12px',
 							borderRadius: '12px',
-							border: '1px solid #D3E4FE',
 							fontSize: '14px',
 							resize: 'vertical',
 						}}
 					/>
-				</div>
-
-				<div style={{ marginBottom: '16px' }}>
-					<label
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: '8px',
-							cursor: 'pointer',
-						}}
-					>
-						<input
-							type='checkbox'
-							checked={formData.priority === 'high'}
-							onChange={e => {
-								setFormData({
-									...formData,
-									priority: e.target.checked ? 'high' : 'medium',
-								})
-							}}
-							style={{
-								width: '18px',
-								height: '18px',
-								cursor: 'pointer',
-								accentColor: '#e74c3c',
-							}}
-						/>
-						<span style={{ fontWeight: '500' }}>Высокий приоритет</span>
-					</label>
 				</div>
 
 				<div style={{ marginBottom: '24px' }}>
@@ -183,8 +203,7 @@ export function EditNewsModal({
 					>
 						URL картинки (необязательно)
 					</label>
-					<input
-						type='text'
+					<Input
 						value={formData.imageUrl}
 						onChange={e =>
 							setFormData({ ...formData, imageUrl: e.target.value })
@@ -192,16 +211,19 @@ export function EditNewsModal({
 						placeholder='https://example.com/image.jpg'
 						style={{
 							width: '100%',
-							padding: '12px',
 							borderRadius: '12px',
-							border: '1px solid #D3E4FE',
 							fontSize: '14px',
 						}}
 					/>
 				</div>
 
 				<div
-					style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}
+					style={{
+						display: 'flex',
+						gap: '12px',
+						justifyContent: 'space-between',
+						marginTop: '48px',
+					}}
 				>
 					<button
 						type='button'
@@ -214,6 +236,7 @@ export function EditNewsModal({
 							color: '#454652',
 							cursor: 'pointer',
 							fontSize: '14px',
+							width: '45%',
 						}}
 					>
 						Отмена
@@ -230,6 +253,7 @@ export function EditNewsModal({
 							cursor: 'pointer',
 							fontSize: '14px',
 							opacity: submitting ? 0.7 : 1,
+							width: '45%',
 						}}
 					>
 						{submitting ? 'Сохранение...' : 'Сохранить'}
