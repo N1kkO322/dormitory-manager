@@ -2,7 +2,6 @@
 // 	id: string
 // 	email: string
 // 	role: 'student' | 'employee'
-// 	isAdmin?: boolean
 // 	name: string
 // }
 
@@ -20,6 +19,7 @@ export interface User {
 	wing?: 'male' | 'female'
 	block?: string
 	room?: string
+	roomType: 2 | 3
 	emergencyContact?: {
 		name: string
 		relation: string

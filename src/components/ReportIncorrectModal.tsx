@@ -4,7 +4,7 @@ import { useState } from 'react'
 type ReportIncorrectModalProps = {
 	opened: boolean
 	onClose: () => void
-	infoType?: string // Например: 'дежурство', 'комната', 'телефон' и т.д.
+	infoType?: string
 }
 
 export function ReportIncorrectModal({
@@ -38,7 +38,6 @@ export function ReportIncorrectModal({
 
 		setSubmitting(true)
 
-		// Имитация отправки
 		setTimeout(() => {
 			console.log('Сообщение о некорректности:', {
 				infoType,

@@ -1,13 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
 import axios from 'axios'
-import { WashingMachine, Wrench } from 'lucide-react'
+import { Ban, LoaderPinwheel, WashingMachine, Wrench } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ReportMachineModal } from '../../components/ReportMachineModal'
+import { auth } from '../../lib/auth'
 
 type WashingMachineType = {
 	id: number
 	name: string
 	status: 'free' | 'busy' | 'broken'
+	occupiedBy?: string
+	occupiedByRole?: string
+	occupiedById?: string | number
+	occupiedByBlock?: string
+	occupiedByRoomType?: number
+	occupiedAt?: string
 }
 
 export const Route = createFileRoute('/_authenticated/washing')({
@@ -47,25 +54,58 @@ function RouteComponent() {
 			return
 		}
 
+		const currentUser = auth.getUser()
+		if (!currentUser) {
+			alert('Ошибка: пользователь не найден')
+			return
+		}
+
+		if (currentStatus === 'busy') {
+			const machine = machines.find(m => m.id === machineId)
+			if (machine?.occupiedById !== currentUser.id) {
+				alert(
+					'Вы не можете освободить эту машину, так как её занял другой пользователь',
+				)
+				return
+			}
+		}
+
 		const newStatus = currentStatus === 'free' ? 'busy' : 'free'
+
+		const updateData: Partial<WashingMachineType> = { status: newStatus }
+
+		if (newStatus === 'busy') {
+			const user = auth.getUser()
+			updateData.occupiedBy =
+				user?.name && user?.surname
+					? `${user.surname} ${user.name}`
+					: user?.role
+			updateData.occupiedById = user?.id
+			updateData.occupiedByRole = user?.role
+			updateData.occupiedByBlock = user?.block
+			updateData.occupiedByRoomType = user?.roomType
+			updateData.occupiedAt = new Date().toLocaleString('ru-RU')
+		} else {
+			updateData.occupiedBy = undefined
+			updateData.occupiedById = undefined
+			updateData.occupiedByBlock = undefined
+			updateData.occupiedAt = undefined
+		}
 
 		try {
 			await axios.patch(
 				`https://f3b0cd06c4aa4730.mokky.dev/machines/${machineId}`,
-				{
-					status: newStatus,
-				},
+				updateData,
 			)
 
 			setMachines(prevMachines =>
 				prevMachines.map(machine =>
-					machine.id === machineId
-						? { ...machine, status: newStatus as 'free' | 'busy' }
-						: machine,
+					machine.id === machineId ? { ...machine, ...updateData } : machine,
 				),
 			)
 		} catch (err) {
 			console.error('Ошибка при изменении статуса:', err)
+			alert('Не удалось изменить статус машины')
 		}
 	}
 
@@ -79,6 +119,7 @@ function RouteComponent() {
 					buttonColor: '#006C49',
 					buttonText: 'Занять',
 					statusText: 'Свободна',
+					Icon: WashingMachine,
 				}
 			case 'busy':
 				return {
@@ -88,6 +129,7 @@ function RouteComponent() {
 					buttonColor: '#603B00',
 					buttonText: 'Освободить',
 					statusText: 'Занята',
+					Icon: LoaderPinwheel,
 				}
 			case 'broken':
 				return {
@@ -97,6 +139,7 @@ function RouteComponent() {
 					buttonColor: '#BA1A1A',
 					buttonText: 'Неисправна',
 					statusText: 'Неисправна',
+					Icon: Ban,
 				}
 			default:
 				return {
@@ -106,9 +149,12 @@ function RouteComponent() {
 					buttonColor: '#006C49',
 					buttonText: 'Занять',
 					statusText: 'Свободна',
+					Icon: WashingMachine,
 				}
 		}
 	}
+
+	const currentUser = auth.getUser()
 
 	if (loading) {
 		return (
@@ -192,26 +238,31 @@ function RouteComponent() {
 					padding: '16px 48px',
 					display: 'flex',
 					justifyContent: 'space-between',
+					gap: '24px',
 				}}
 			>
 				<div
 					className='itemListWash'
 					style={{
+						width: '70%',
 						display: 'flex',
 						flexWrap: 'wrap',
 						gap: '12px',
-						// justifyContent: 'space-between',
 						alignItems: 'flex-start',
 						alignContent: 'flex-start',
 					}}
 				>
 					{machines.map(machine => {
 						const styles = getMachineStyles(machine.status)
+						const IconComponent = styles.Icon
+						const isCurrentUserOccupier =
+							machine.occupiedById === currentUser?.id
+
 						return (
 							<div
 								key={machine.id}
 								style={{
-									width: '32%',
+									width: 'calc(33.33% - 8px)',
 									height: '340px',
 									backgroundColor: '#fff',
 									borderRadius: '24px',
@@ -223,17 +274,16 @@ function RouteComponent() {
 									flexDirection: 'column',
 									alignItems: 'center',
 									justifyContent: 'space-between',
-									// flexGrow: '1',
 								}}
 							>
 								<div
 									style={{
 										backgroundColor: styles.bgColor,
-										padding: '32px',
+										padding: '32px 32px 24px 32px',
 										borderRadius: '50%',
 									}}
 								>
-									<WashingMachine size={48} color={styles.iconColor} />
+									<IconComponent size={48} color={styles.iconColor} />
 								</div>
 								<div style={{ textAlign: 'center' }}>
 									<h2 style={{ fontSize: '16px', fontWeight: '600' }}>
@@ -288,12 +338,31 @@ function RouteComponent() {
 											fontSize: '14px',
 											fontWeight: '500',
 											transition: 'all 0.2s',
+											opacity:
+												machine.status === 'busy' && !isCurrentUserOccupier
+													? 0.5
+													: 1,
+											cursor:
+												machine.status === 'busy' && !isCurrentUserOccupier
+													? 'not-allowed'
+													: 'pointer',
 										}}
+										disabled={
+											machine.status === 'busy' && !isCurrentUserOccupier
+										}
 										onMouseEnter={e => {
-											e.currentTarget.style.opacity = '0.8'
+											if (
+												!(machine.status === 'busy' && !isCurrentUserOccupier)
+											) {
+												e.currentTarget.style.opacity = '0.8'
+											}
 										}}
 										onMouseLeave={e => {
-											e.currentTarget.style.opacity = '1'
+											if (
+												!(machine.status === 'busy' && !isCurrentUserOccupier)
+											) {
+												e.currentTarget.style.opacity = '1'
+											}
 										}}
 									>
 										{styles.buttonText}
@@ -304,16 +373,22 @@ function RouteComponent() {
 					})}
 				</div>
 				<div
-					style={{ display: 'flex', width: '30%', justifyContent: 'center' }}
+					style={{
+						display: 'flex',
+						width: '30%',
+						justifyContent: 'flex-start',
+						flexDirection: 'column',
+						height: '100%',
+						gap: '24px',
+					}}
 				>
 					<div
 						style={{
 							width: '100%',
-							height: '200px',
 							backgroundColor: '#fff',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '36px',
+							padding: '24px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							color: '#0B1C30',
 							display: 'flex',
@@ -328,13 +403,13 @@ function RouteComponent() {
 								justifyContent: 'center',
 								width: '100%',
 								flexDirection: 'column',
-								gap: '36px',
+								gap: '16px',
 							}}
 						>
 							<h2
 								style={{
 									fontWeight: '600',
-									fontSize: '20px',
+									fontSize: '18px',
 									textAlign: 'center',
 								}}
 							>
@@ -367,6 +442,112 @@ function RouteComponent() {
 							>
 								Сообщить о проблеме <Wrench />
 							</button>
+						</div>
+					</div>
+
+					<div
+						style={{
+							width: '100%',
+							backgroundColor: '#fff',
+							borderRadius: '24px',
+							border: '1px solid #D3E4FE',
+							padding: '24px',
+							boxShadow: '#24389c14 0px 4px 12px',
+							color: '#0B1C30',
+							display: 'flex',
+							flexDirection: 'column',
+							gap: '16px',
+						}}
+					>
+						<h2
+							style={{
+								fontWeight: '600',
+								fontSize: '18px',
+								textAlign: 'center',
+								margin: 0,
+							}}
+						>
+							Журнал занятости
+						</h2>
+						<div
+							style={{
+								maxHeight: '500px',
+								overflowY: 'auto',
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '12px',
+							}}
+						>
+							{machines.some(m => m.status === 'busy') ? (
+								machines
+									.filter(m => m.status === 'busy')
+									.map(machine => (
+										<div
+											key={machine.id}
+											style={{
+												padding: '12px',
+												backgroundColor: '#FFF3E0',
+												borderRadius: '12px',
+												border: '1px solid #FFB95F',
+											}}
+										>
+											<div
+												style={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													alignItems: 'center',
+													marginBottom: '8px',
+												}}
+											>
+												<strong style={{ fontSize: '14px' }}>
+													{machine.name}
+												</strong>
+												<span
+													style={{
+														fontSize: '12px',
+														padding: '2px 8px',
+														backgroundColor: '#FFB95F',
+														borderRadius: '12px',
+														color: '#603B00',
+													}}
+												>
+													Занята
+												</span>
+											</div>
+											<div style={{ fontSize: '12px', color: '#666' }}>
+												Кто занял: {machine.occupiedBy || 'Администратор'}
+												{machine.occupiedByBlock &&
+													machine.occupiedByRole !== 'employee' && (
+														<>
+															{' '}
+															{'/'} {machine.occupiedByBlock} (
+															{machine.occupiedByRoomType})
+														</>
+													)}
+											</div>
+											<div
+												style={{
+													fontSize: '12px',
+													color: '#666',
+													marginTop: '4px',
+												}}
+											>
+												Когда: {machine.occupiedAt}
+											</div>
+										</div>
+									))
+							) : (
+								<div
+									style={{
+										textAlign: 'center',
+										padding: '24px',
+										color: '#666',
+										fontSize: '14px',
+									}}
+								>
+									Все доступные машины свободны
+								</div>
+							)}
 						</div>
 					</div>
 				</div>

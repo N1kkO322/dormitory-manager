@@ -465,7 +465,7 @@ function RouteComponent() {
 								}}
 								to={'/duties'}
 							>
-								Детально
+								Календарь дежурств
 							</Link>
 						</div>
 						<div

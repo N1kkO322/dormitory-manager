@@ -16,6 +16,7 @@ export const Route = createFileRoute('/_authenticated/profile')({
 })
 
 function RouteComponent() {
+	// const [loading, setLoading] = useState(true)
 	const [incorrectModalOpened, setIncorrectModalOpened] = useState(false)
 
 	const user = auth.getUser()
@@ -47,7 +48,6 @@ function RouteComponent() {
 				infoType='дежурства'
 			/>
 
-			{/* Заголовок */}
 			<div
 				style={{
 					display: 'flex',
@@ -61,7 +61,6 @@ function RouteComponent() {
 				<p style={{ color: '#454652' }}>Ваша личная информация</p>
 			</div>
 
-			{/* Основной контент */}
 			<div
 				style={{
 					height: '88dvh',
@@ -72,9 +71,7 @@ function RouteComponent() {
 					gap: '24px',
 				}}
 			>
-				{/* Левая колонка - личная информация */}
 				<div style={{ flex: '1 1 0%', width: '100%' }}>
-					{/* Основная информация */}
 					<div
 						style={{
 							backgroundColor: '#fff',
@@ -156,7 +153,6 @@ function RouteComponent() {
 									gap: '42px',
 								}}
 							>
-								{/* Комната - auto */}
 								{isStudent && (
 									<div
 										style={{
@@ -198,7 +194,6 @@ function RouteComponent() {
 									</div>
 								)}
 
-								{/* Почта - 70% */}
 								<div
 									style={{
 										backgroundColor: '#F8F9FF',
@@ -238,7 +233,6 @@ function RouteComponent() {
 									</div>
 								</div>
 
-								{/* Телефон - 70% */}
 								<div
 									style={{
 										backgroundColor: '#F8F9FF',
@@ -278,7 +272,6 @@ function RouteComponent() {
 									</div>
 								</div>
 
-								{/* Группа - auto */}
 								{isStudent && (
 									<div
 										style={{
@@ -323,7 +316,6 @@ function RouteComponent() {
 						</div>
 					</div>
 
-					{/* Экстренный контакт */}
 					{isStudent && (
 						<>
 							<div
@@ -383,7 +375,6 @@ function RouteComponent() {
 					)}
 				</div>
 
-				{/* Правая колонка - обязанности */}
 				<div
 					style={{
 						width: '30%',

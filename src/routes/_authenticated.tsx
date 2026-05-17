@@ -126,7 +126,7 @@ function AuthenticatedLayout() {
 								>
 									<item.icon
 										size={20}
-										color={isActive ? '#6060f0' : '#2C3E50'} // 👈 Меняем цвет на чёрный/синий
+										color={isActive ? '#6060f0' : '#2C3E50'}
 										strokeWidth={3}
 									/>
 									{item.label}

@@ -61,6 +61,6 @@ export const Route = createRootRoute({
 			})
 		}
 
-		console.log('🟢 Доступ разрешен к:', currentPath)
+		console.log('Доступ разрешен к:', currentPath)
 	},
 })
