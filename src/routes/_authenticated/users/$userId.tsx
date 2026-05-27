@@ -1,5 +1,5 @@
 import { Modal } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import {
 	AlertCircle,
@@ -156,6 +156,7 @@ function RouteComponent() {
 		useDisclosure(false)
 	const [deleteOpened, { open: openDelete, close: closeDelete }] =
 		useDisclosure(false)
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	useEffect(() => {
 		setLoading(true)
@@ -249,6 +250,79 @@ function RouteComponent() {
 	}
 
 	const isStudent = user.role === 'student'
+
+	const actionButtons = (
+		<div
+			style={{
+				width: isMobile ? '100%' : '30%',
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '16px',
+			}}
+		>
+			<button
+				type='button'
+				onClick={openEdit}
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					gap: '8px',
+					width: '100%',
+					padding: '14px 16px',
+					backgroundColor: '#E5EEFF',
+					border: 'none',
+					borderRadius: '20px',
+					color: '#6060f0',
+					fontSize: '15px',
+					fontWeight: '600',
+					cursor: 'pointer',
+				}}
+			>
+				<SquarePen size={18} />
+				Редактировать
+			</button>
+			<button
+				type='button'
+				onClick={() => router.navigate({ to: '/users' })}
+				style={{
+					width: '100%',
+					padding: '14px 16px',
+					backgroundColor: '#6060f0',
+					border: 'none',
+					borderRadius: '20px',
+					color: '#fff',
+					fontSize: '15px',
+					fontWeight: '500',
+					cursor: 'pointer',
+				}}
+			>
+				Вернуться к списку
+			</button>
+			<button
+				type='button'
+				onClick={openDelete}
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					gap: '8px',
+					width: '100%',
+					padding: '14px 16px',
+					backgroundColor: '#FFE5E5',
+					border: 'none',
+					borderRadius: '20px',
+					color: '#e74c3c',
+					fontSize: '15px',
+					fontWeight: '600',
+					cursor: 'pointer',
+				}}
+			>
+				<Trash2 size={18} />
+				Удалить пользователя
+			</button>
+		</div>
+	)
 
 	return (
 		<>
@@ -348,44 +422,54 @@ function RouteComponent() {
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '12dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '12dvh',
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>Профиль пользователя</h2>
-				<p style={{ color: '#454652' }}>Личная информация пользователя</p>
+				<p style={{ color: '#454652', marginTop: isMobile ? '4px' : undefined }}>
+					Личная информация пользователя
+				</p>
 			</div>
 
 			<div
 				style={{
-					height: '88dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '88dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
-					flexDirection: 'row',
+					flexDirection: isMobile ? 'column' : 'row',
 					justifyContent: 'space-between',
 					gap: '24px',
 				}}
 			>
+				{/* Кнопки действий — сверху на мобильном */}
+				{isMobile && actionButtons}
+
 				<div style={{ flex: '1 1 0%', width: '100%' }}>
+					{/* Карточка с основной информацией */}
 					<div
 						style={{
 							backgroundColor: '#fff',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '32px',
+							padding: isMobile ? '20px' : '32px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							marginBottom: '24px',
 							display: 'flex',
+							flexDirection: isMobile ? 'column' : 'row',
 							width: '100%',
+							alignItems: isMobile ? 'center' : 'flex-start',
 						}}
 					>
+						{/* Фото */}
 						<div
 							style={{
 								display: 'flex',
 								alignItems: 'center',
-								width: '20%',
-								paddingRight: '32px',
 								justifyContent: 'center',
+								width: isMobile ? '100%' : '20%',
+								paddingRight: isMobile ? '0' : '32px',
+								paddingBottom: isMobile ? '20px' : '0',
 							}}
 						>
 							{user.photo ? (
@@ -393,40 +477,53 @@ function RouteComponent() {
 									src={user.photo}
 									alt='Фото профиля'
 									style={{
-										width: '140px',
-										height: '140px',
+										width: isMobile ? '110px' : '140px',
+										height: isMobile ? '110px' : '140px',
 										borderRadius: '50%',
 										objectFit: 'cover',
 									}}
 								/>
 							) : (
-								<User size={60} color='#6060f0' />
+								<div
+									style={{
+										width: isMobile ? '110px' : '140px',
+										height: isMobile ? '110px' : '140px',
+										borderRadius: '50%',
+										backgroundColor: '#E5EEFF',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+									}}
+								>
+									<User size={isMobile ? 48 : 60} color='#6060f0' />
+								</div>
 							)}
 						</div>
+
+						{/* Имя + поля */}
 						<div
 							style={{
 								display: 'flex',
 								flexDirection: 'column',
-								gap: '24px',
+								gap: '20px',
 								width: '100%',
 							}}
 						>
-							<div>
-								<h2 style={{ fontSize: '24px', fontWeight: '600' }}>
+							<div style={{ textAlign: isMobile ? 'center' : 'left' }}>
+								<h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '600' }}>
 									{getFullName(user)}
 								</h2>
-								<p style={{ color: '#6060f0' }}>
+								<p style={{ color: '#6060f0', marginTop: '4px' }}>
 									{isStudent ? 'Студент' : 'Сотрудник'}
 								</p>
 							</div>
+
 							<div
 								style={{
 									display: 'flex',
-									justifyContent: 'space-between',
+									flexDirection: 'column',
+									gap: '12px',
 									width: '100%',
-									flexDirection: isStudent ? 'row' : 'column',
-									flexWrap: 'wrap',
-									gap: '42px',
 								}}
 							>
 								{isStudent && (
@@ -452,13 +549,14 @@ function RouteComponent() {
 						</div>
 					</div>
 
+					{/* Экстренный контакт */}
 					{isStudent && (
 						<div
 							style={{
 								backgroundColor: '#fff',
 								borderRadius: '24px',
 								border: '1px solid #D3E4FE',
-								padding: '32px',
+								padding: isMobile ? '20px' : '32px',
 								boxShadow: '#24389c14 0px 4px 12px',
 							}}
 						>
@@ -509,76 +607,8 @@ function RouteComponent() {
 					)}
 				</div>
 
-				<div
-					style={{
-						width: '30%',
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '24px',
-					}}
-				>
-					<button
-						type='button'
-						onClick={openEdit}
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							gap: '8px',
-							width: '100%',
-							padding: '12px 16px',
-							backgroundColor: '#E5EEFF',
-							border: 'none',
-							borderRadius: '20px',
-							color: '#6060f0',
-							fontSize: '14px',
-							fontWeight: '600',
-							cursor: 'pointer',
-						}}
-					>
-						<SquarePen size={18} />
-						Редактировать
-					</button>
-					<button
-						type='button'
-						onClick={() => router.navigate({ to: '/users' })}
-						style={{
-							width: '100%',
-							padding: '12px 16px',
-							backgroundColor: '#6060f0',
-							border: 'none',
-							borderRadius: '20px',
-							color: '#fff',
-							fontSize: '14px',
-							fontWeight: '500',
-							cursor: 'pointer',
-						}}
-					>
-						Вернуться к списку
-					</button>
-					<button
-						type='button'
-						onClick={openDelete}
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							gap: '8px',
-							width: '100%',
-							padding: '12px 16px',
-							backgroundColor: '#FFE5E5',
-							border: 'none',
-							borderRadius: '20px',
-							color: '#e74c3c',
-							fontSize: '14px',
-							fontWeight: '600',
-							cursor: 'pointer',
-						}}
-					>
-						<Trash2 size={18} />
-						Удалить пользователя
-					</button>
-				</div>
+				{/* Кнопки действий — справа на десктопе */}
+				{!isMobile && actionButtons}
 			</div>
 		</>
 	)
@@ -597,19 +627,20 @@ function InfoCard({
 		<div
 			style={{
 				backgroundColor: '#F8F9FF',
-				minWidth: '20%',
+				width: '100%',
 				borderRadius: '12px',
 			}}
 		>
-			<div style={{ padding: '16px', display: 'flex', gap: '16px' }}>
+			<div style={{ padding: '14px 16px', display: 'flex', gap: '14px', alignItems: 'center' }}>
 				<div
 					style={{
-						padding: '12px',
+						padding: '10px',
 						backgroundColor: '#dee0ff81',
 						borderRadius: '50%',
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'center',
+						flexShrink: 0,
 					}}
 				>
 					{icon}
@@ -619,10 +650,13 @@ function InfoCard({
 						display: 'flex',
 						flexDirection: 'column',
 						justifyContent: 'center',
+						minWidth: 0,
 					}}
 				>
-					<div style={{ color: '#454652', fontSize: '14px' }}>{label}</div>
-					<div style={{ fontWeight: '600', fontSize: '18px' }}>{children}</div>
+					<div style={{ color: '#454652', fontSize: '13px' }}>{label}</div>
+					<div style={{ fontWeight: '600', fontSize: '16px', overflowWrap: 'anywhere' }}>
+						{children}
+					</div>
 				</div>
 			</div>
 		</div>
