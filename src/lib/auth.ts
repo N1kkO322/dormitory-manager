@@ -1,17 +1,10 @@
-// export interface User {
-// 	id: string
-// 	email: string
-// 	role: 'student' | 'employee'
-// 	name: string
-// }
-
 export interface User {
 	id: number
 	email: string
 	role: 'student' | 'employee'
 	name: string
 	surname: string
-	middleName?: string
+	middle_name?: string
 	phone: string
 	photo?: string
 	group?: string
@@ -19,12 +12,10 @@ export interface User {
 	wing?: 'male' | 'female'
 	block?: string
 	room?: string
-	roomType: 2 | 3
-	emergencyContact?: {
-		name: string
-		relation: string
-		phone: string
-	}
+	room_type: 2 | 3
+	emergency_contact_name?: string
+	emergency_contact_phone?: string
+	emergency_contact_relation?: string
 }
 
 export const auth = {

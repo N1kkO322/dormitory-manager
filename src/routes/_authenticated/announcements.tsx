@@ -1,12 +1,13 @@
 import { Modal } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import axios from 'axios'
 import { Plus, ShieldCheck, SquarePen, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AddNewsModalContent } from '../../components/AddNewsModalContent'
 import { DeleteNewsModal } from '../../components/DeleteNewsModal'
 import { EditNewsModal } from '../../components/EditNewsModal'
+import api from '../../lib/api'
+import type { User } from '../../lib/auth'
 import { auth } from '../../lib/auth'
 
 type NewsItem = {
@@ -17,7 +18,14 @@ type NewsItem = {
 	priority: string
 	author: string
 	created: string
-	imageUrl?: string
+	image_url?: string
+}
+
+type Duty = {
+	id: number
+	student: User
+	floor: number
+	date: string
 }
 
 export const Route = createFileRoute('/_authenticated/announcements')({
@@ -36,25 +44,29 @@ function RouteComponent() {
 	const [editOpened, { open: openEdit, close: closeEdit }] =
 		useDisclosure(false)
 	const [newsToEdit, setNewsToEdit] = useState<NewsItem | null>(null)
+	const [duties, setDuties] = useState<Duty[]>([])
+	const [weather, setWeather] = useState<{
+		temp: number | null
+		description: string
+		icon: string
+	}>({
+		temp: null,
+		description: '',
+		icon: '',
+	})
+
+	const user = auth.getUser()
+	const isEmployee = user?.role === 'employee'
 
 	const getWelcomeMeassage = () => {
 		const hour = new Date().getHours()
-		if (hour >= 6 && hour < 12) {
-			return 'Доброе утро'
-		}
-		if (hour >= 12 && hour < 18) {
-			return 'Добрый день'
-		}
-		if (hour >= 18 && hour < 24) {
-			return 'Добрый вечер'
-		}
+		if (hour >= 6 && hour < 12) return 'Доброе утро'
+		if (hour >= 12 && hour < 18) return 'Добрый день'
+		if (hour >= 18 && hour < 24) return 'Добрый вечер'
 		return 'Доброй ночи'
 	}
 
 	const welcome = getWelcomeMeassage()
-
-	const user = auth.getUser()
-	const isEmployee = user?.role === 'employee'
 
 	const toggleExpand = (id: number) => {
 		setExpandedNews(prev =>
@@ -69,11 +81,7 @@ function RouteComponent() {
 
 	const refreshNews = async () => {
 		try {
-			console.log('Обновляю новости...')
-			const response = await axios.get(
-				'https://f3b0cd06c4aa4730.mokky.dev/news',
-			)
-			console.log('Получены новости:', response.data)
+			const response = await api.get('/api/news/')
 			const sortedNews = response.data.sort(
 				(a: NewsItem, b: NewsItem) => b.id - a.id,
 			)
@@ -85,18 +93,9 @@ function RouteComponent() {
 
 	const handleDeleteNews = async () => {
 		if (!newsToDelete) return
-
 		try {
-			await axios.delete(
-				`https://f3b0cd06c4aa4730.mokky.dev/news/${newsToDelete.id}`,
-			)
-			const response = await axios.get(
-				'https://f3b0cd06c4aa4730.mokky.dev/news',
-			)
-			const sortedNews = response.data.sort(
-				(a: NewsItem, b: NewsItem) => b.id - a.id,
-			)
-			setNews(sortedNews)
+			await api.delete(`/api/news/${newsToDelete.id}`)
+			await refreshNews()
 			closeDelete()
 			setNewsToDelete(null)
 		} catch (error) {
@@ -105,9 +104,49 @@ function RouteComponent() {
 		}
 	}
 
+	const generateDutiesForTwoWeeks = (students: User[]): Duty[] => {
+		const twoRoom = students.filter(s => s.room_type === 2)
+		const threeRoom = students.filter(s => s.room_type === 3)
+
+		const sortFn = (a: User, b: User) => {
+			const blockA = parseInt(a.block || '0')
+			const blockB = parseInt(b.block || '0')
+			if (blockA !== blockB) return blockA - blockB
+			return (a.room || '').localeCompare(b.room || '')
+		}
+
+		twoRoom.sort(sortFn)
+		threeRoom.sort(sortFn)
+
+		const queue = [...twoRoom, ...threeRoom]
+		if (queue.length === 0) return []
+
+		const today = new Date()
+		const startOfYear = new Date(today.getFullYear(), 0, 0)
+		const dayOfYear = Math.floor(
+			(today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24),
+		)
+		const startIndex = dayOfYear % queue.length
+
+		const duties: Duty[] = []
+		for (let i = 0; i < 14; i++) {
+			const date = new Date(today)
+			date.setDate(today.getDate() + i)
+			const dateStr = date.toISOString().split('T')[0]
+			const studentIndex = (startIndex + i) % queue.length
+			duties.push({
+				id: i,
+				student: queue[studentIndex],
+				floor: queue[studentIndex].floor!,
+				date: dateStr,
+			})
+		}
+		return duties
+	}
+
 	useEffect(() => {
-		axios
-			.get('https://f3b0cd06c4aa4730.mokky.dev/news')
+		api
+			.get('/api/news/')
 			.then(response => {
 				const sortedNews = response.data.sort(
 					(a: NewsItem, b: NewsItem) => b.id - a.id,
@@ -120,7 +159,42 @@ function RouteComponent() {
 				setError('Не удалось загрузить новости')
 				setLoading(false)
 			})
+
+		const city = 'Saint Petersburg'
+		const key = '15523bec7eabcc8e0c4814fc65555711'
+		fetch(
+			`https://api.openweathermap.org/data/2.5/weather?units=metric&q=${city}&appid=${key}&lang=ru`,
+		)
+			.then(response => response.json())
+			.then(data => {
+				if (data.main) {
+					setWeather({
+						temp: Math.round(data.main.temp),
+						description: data.weather[0].description,
+						icon: data.weather[0].icon,
+					})
+					console.log(data)
+				}
+			})
+			.catch(error => console.error('Ошибка погоды:', error))
+
+		if (user?.role === 'student') {
+			api.get('/api/users/').then(res => {
+				const students = res.data.filter((u: User) => u.role === 'student')
+				if (students.length > 0) {
+					const generated = generateDutiesForTwoWeeks(students)
+					setDuties(generated)
+				}
+			})
+		}
 	}, [])
+
+	const now = new Date()
+	const today = now.toISOString().split('T')[0]
+	const myFutureDuties = duties
+		.filter(d => d.student.id === user?.id && d.date >= today)
+		.sort((a, b) => a.date.localeCompare(b.date))
+	const nextDuty = myFutureDuties[0]
 
 	if (loading) {
 		return (
@@ -138,7 +212,18 @@ function RouteComponent() {
 	}
 
 	if (error) {
-		return <div style={{ color: 'red' }}>{error}</div>
+		return (
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					height: '100dvh',
+				}}
+			>
+				<div style={{ color: '#ff4848', fontSize: '18px' }}>{error}</div>
+			</div>
+		)
 	}
 
 	return (
@@ -151,12 +236,7 @@ function RouteComponent() {
 				centered
 				radius={'16px'}
 				padding={'28px'}
-				styles={{
-					title: {
-						fontWeight: 'bold',
-						fontSize: '24px',
-					},
-				}}
+				styles={{ title: { fontWeight: 'bold', fontSize: '24px' } }}
 			>
 				<AddNewsModalContent onSuccess={refreshNews} onClose={close} />
 			</Modal>
@@ -182,7 +262,7 @@ function RouteComponent() {
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>
-					{welcome}, {user?.name}{' '}
+					{welcome}, {user?.name}
 				</h2>
 				<p style={{ color: '#454652' }}>
 					Вот, что происходит в общежитии сегодня
@@ -294,7 +374,6 @@ function RouteComponent() {
 												>
 													<SquarePen />
 												</button>
-
 												<button
 													onClick={() => {
 														setNewsToDelete(item)
@@ -339,10 +418,10 @@ function RouteComponent() {
 									</div>
 								</div>
 
-								{item.imageUrl && (
+								{item.image_url && (
 									<div style={{ marginTop: '16px' }}>
 										<img
-											src={item.imageUrl}
+											src={item.image_url}
 											alt={item.title}
 											style={{
 												width: '100%',
@@ -431,79 +510,89 @@ function RouteComponent() {
 						gap: '48px',
 					}}
 				>
-					<div
-						style={{
-							width: '100%',
-							backgroundColor: '#fff',
-							borderRadius: '24px',
-							border: '1px solid #D3E4FE',
-							padding: '24px',
-							boxShadow: '#24389c14 0px 4px 12px',
-							color: '#0B1C30',
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-							gap: '24px',
-						}}
-					>
-						<div
-							style={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-								width: '100%',
-							}}
-						>
-							<h2 style={{ fontSize: '20px', fontWeight: '600' }}>
-								Мои дежурства
-							</h2>
-							<Link
-								style={{
-									textDecoration: 'none',
-									color: '#6060f0',
-									fontWeight: '600',
-								}}
-								to={'/duties'}
-							>
-								Календарь дежурств
-							</Link>
-						</div>
+					{user?.role === 'student' && nextDuty && (
 						<div
 							style={{
 								width: '100%',
+								backgroundColor: '#fff',
+								borderRadius: '24px',
+								border: '1px solid #D3E4FE',
+								padding: '24px',
+								boxShadow: '#24389c14 0px 4px 12px',
+								color: '#0B1C30',
 								display: 'flex',
+								flexDirection: 'column',
 								alignItems: 'center',
 								gap: '24px',
 							}}
 						>
 							<div
 								style={{
-									width: '60px',
-									height: '60px',
-									backgroundColor: '#E5EEFF',
-									borderRadius: '8px',
 									display: 'flex',
-									justifyContent: 'center',
-									flexDirection: 'column',
+									justifyContent: 'space-between',
 									alignItems: 'center',
+									width: '100%',
 								}}
 							>
-								<span
+								<h2 style={{ fontSize: '20px', fontWeight: '600' }}>
+									Ближайшие дежурства
+								</h2>
+								<Link
 									style={{
+										textDecoration: 'none',
 										color: '#6060f0',
 										fontWeight: '600',
-										fontSize: '14px',
+									}}
+									to={'/duties'}
+								>
+									Календарь дежурств
+								</Link>
+							</div>
+							<div
+								style={{
+									width: '100%',
+									display: 'flex',
+									alignItems: 'center',
+									gap: '24px',
+								}}
+							>
+								<div
+									style={{
+										width: '60px',
+										height: '60px',
+										backgroundColor: '#E5EEFF',
+										borderRadius: '8px',
+										display: 'flex',
+										justifyContent: 'center',
+										flexDirection: 'column',
+										alignItems: 'center',
 									}}
 								>
-									ДЕК
-								</span>
-								<span style={{ fontWeight: '600', fontSize: '20px' }}>14</span>
-							</div>
-							<div>
-								<h2 style={{ letterSpacing: '1px' }}>Уборка кухни</h2>
+									<span
+										style={{
+											color: '#6060f0',
+											fontWeight: '600',
+											fontSize: '12px',
+										}}
+									>
+										{(() => {
+											const d = new Date(nextDuty.date)
+											return d
+												.toLocaleString('ru', { month: 'short' })
+												.replace('.', '')
+												.toUpperCase()
+										})()}
+									</span>
+									<span style={{ fontWeight: '600', fontSize: '20px' }}>
+										{new Date(nextDuty.date).getDate()}
+									</span>
+								</div>
+								<div>
+									<h2 style={{ letterSpacing: '1px' }}>Уборка кухни</h2>
+								</div>
 							</div>
 						</div>
-					</div>
+					)}
 
 					<div
 						style={{
@@ -525,33 +614,40 @@ function RouteComponent() {
 								display: 'flex',
 								justifyContent: 'space-between',
 								width: '100%',
-								flexDirection: 'row',
+								flexDirection: 'column',
 								gap: '24px',
 							}}
 						>
 							<h2 style={{ fontWeight: '600' }}>Погода на сегодня</h2>
-							<div
-								style={{
-									display: 'flex',
-									flexDirection: 'row',
-									alignItems: 'center',
-									gap: '12px',
-								}}
-							>
+							{weather.temp !== null ? (
 								<div
 									style={{
-										width: '12px',
-										height: '12px',
-										backgroundColor: '#6CF8BB',
-										borderRadius: '50%',
+										display: 'flex',
+										flexDirection: 'row',
+										alignItems: 'center',
+										gap: '12px',
 									}}
-								></div>
-								<h2 style={{ fontWeight: '600' }}>24°</h2>
-								<span style={{ fontWeight: '600' }}>/</span>
-								<h2>Ясно</h2>
-							</div>
+								>
+									<div
+										style={{
+											width: '12px',
+											height: '12px',
+											backgroundColor: '#6CF8BB',
+											borderRadius: '50%',
+										}}
+									></div>
+									<h2 style={{ fontWeight: '600' }}>{weather.temp}°</h2>
+									<span style={{ fontWeight: '600' }}>/</span>
+									<h2 style={{ textTransform: 'capitalize' }}>
+										{weather.description}
+									</h2>
+								</div>
+							) : (
+								<div className='load-weather'></div>
+							)}
 						</div>
 					</div>
+
 					{isEmployee && (
 						<button
 							onClick={open}

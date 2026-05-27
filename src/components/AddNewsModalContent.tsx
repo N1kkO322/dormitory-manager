@@ -1,6 +1,6 @@
 import { Checkbox, Input, Select, Textarea } from '@mantine/core'
-import axios from 'axios'
 import { useState } from 'react'
+import api from '../lib/api'
 
 type AddNewsModalContentProps = {
 	onSuccess: () => void
@@ -21,51 +21,30 @@ export function AddNewsModalContent({
 		imageUrl: '',
 	})
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [errors, setErrors] = useState({ title: false })
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
 		if (!formData.title.trim()) {
-			setErrors({
-				title: !formData.title.trim(),
-			})
+			setErrors({ title: true })
 			return
 		}
 
 		setSubmitting(true)
 
 		try {
-			const response = await axios.post(
-				'https://f3b0cd06c4aa4730.mokky.dev/news',
-				{
-					type: formData.type,
-					title: formData.title,
-					content: formData.content,
-					priority: formData.priority,
-					author: formData.author,
-					imageUrl: formData.imageUrl || null,
-					created: new Date().toLocaleString('ru-RU', {
-						day: 'numeric',
-						month: 'long',
-						year: 'numeric',
-						hour: '2-digit',
-						minute: '2-digit',
-					}),
-				},
-			)
+			await api.post('/api/news/', {
+				type: formData.type,
+				title: formData.title,
+				content: formData.content,
+				priority: formData.priority,
+				image_url: formData.imageUrl || null,
+			})
 
 			onSuccess()
 			onClose()
-
-			setFormData({
-				type: 'Уведомление',
-				title: '',
-				content: '',
-				priority: 'medium',
-				author: 'Администрация',
-				imageUrl: '',
-			})
 		} catch (err) {
 			console.error('Ошибка при добавлении новости:', err)
 		} finally {
@@ -96,7 +75,7 @@ export function AddNewsModalContent({
 				<div style={{ width: '45%' }}>
 					<Select
 						value={formData.type}
-						onChange={value => setFormData({ ...formData, type: value })}
+						onChange={value => setFormData({ ...formData, type: value || '' })}
 						data={[
 							{ value: 'Уведомление', label: 'Уведомление' },
 							{ value: 'Событие', label: 'Событие' },
@@ -125,7 +104,7 @@ export function AddNewsModalContent({
 						}}
 					>
 						<Checkbox
-							size={24}
+							size='md'
 							checked={formData.priority === 'high'}
 							onChange={e => {
 								setFormData({
@@ -136,7 +115,6 @@ export function AddNewsModalContent({
 							style={{
 								width: '18px',
 								height: '18px',
-								// cursor: 'pointer',
 							}}
 						/>
 						<span style={{ fontWeight: '500' }}>Высокий приоритет</span>

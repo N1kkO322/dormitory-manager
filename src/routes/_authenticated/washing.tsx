@@ -1,20 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router'
-import axios from 'axios'
-import { Ban, LoaderPinwheel, WashingMachine, Wrench } from 'lucide-react'
+import {
+	Ban,
+	LoaderPinwheel,
+	Plus,
+	Trash2,
+	WashingMachine,
+	Wrench,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { DeleteMachineModal } from '../../components/DeleteMachineModal'
 import { ReportMachineModal } from '../../components/ReportMachineModal'
+import api from '../../lib/api'
 import { auth } from '../../lib/auth'
 
 type WashingMachineType = {
 	id: number
 	name: string
 	status: 'free' | 'busy' | 'broken'
-	occupiedBy?: string
-	occupiedByRole?: string
-	occupiedById?: string | number
-	occupiedByBlock?: string
-	occupiedByRoomType?: number
-	occupiedAt?: string
+	occupied_by?: string
+	occupied_by_role?: string
+	occupied_by_id?: number
+	occupied_by_block?: string
+	occupied_by_room_type?: number
+	occupied_at?: string
 }
 
 export const Route = createFileRoute('/_authenticated/washing')({
@@ -26,21 +34,24 @@ function RouteComponent() {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [problemModalOpened, setProblemModalOpened] = useState(false)
+	const [deleteModalOpened, setDeleteModalOpened] = useState(false)
+	const [machineToDelete, setMachineToDelete] =
+		useState<WashingMachineType | null>(null)
 
 	const freeCount = machines.filter(m => m.status === 'free').length
 	const busyCount = machines.filter(m => m.status === 'busy').length
 	const brokenCount = machines.filter(m => m.status === 'broken').length
 
 	useEffect(() => {
-		axios
-			.get('https://f3b0cd06c4aa4730.mokky.dev/machines')
+		api
+			.get('/api/machines/')
 			.then(response => {
 				setMachines(response.data)
 				setLoading(false)
 			})
 			.catch(error => {
 				console.error('Ошибка:', error)
-				setError('Не удалось загрузить данные о стиральных машинах')
+				setError('Не удалось загрузить данные, пожалуйста, подождите')
 				setLoading(false)
 			})
 	}, [])
@@ -62,7 +73,7 @@ function RouteComponent() {
 
 		if (currentStatus === 'busy') {
 			const machine = machines.find(m => m.id === machineId)
-			if (machine?.occupiedById !== currentUser.id) {
+			if (machine?.occupied_by_id !== currentUser.id) {
 				alert(
 					'Вы не можете освободить эту машину, так как её занял другой пользователь',
 				)
@@ -72,40 +83,95 @@ function RouteComponent() {
 
 		const newStatus = currentStatus === 'free' ? 'busy' : 'free'
 
-		const updateData: Partial<WashingMachineType> = { status: newStatus }
-
-		if (newStatus === 'busy') {
-			const user = auth.getUser()
-			updateData.occupiedBy =
-				user?.name && user?.surname
-					? `${user.surname} ${user.name}`
-					: user?.role
-			updateData.occupiedById = user?.id
-			updateData.occupiedByRole = user?.role
-			updateData.occupiedByBlock = user?.block
-			updateData.occupiedByRoomType = user?.roomType
-			updateData.occupiedAt = new Date().toLocaleString('ru-RU')
-		} else {
-			updateData.occupiedBy = undefined
-			updateData.occupiedById = undefined
-			updateData.occupiedByBlock = undefined
-			updateData.occupiedAt = undefined
-		}
-
 		try {
-			await axios.patch(
-				`https://f3b0cd06c4aa4730.mokky.dev/machines/${machineId}`,
-				updateData,
-			)
+			const response = await api.patch(`/api/machines/${machineId}`, {
+				status: newStatus,
+			})
 
 			setMachines(prevMachines =>
 				prevMachines.map(machine =>
-					machine.id === machineId ? { ...machine, ...updateData } : machine,
+					machine.id === machineId ? response.data : machine,
 				),
 			)
 		} catch (err) {
 			console.error('Ошибка при изменении статуса:', err)
-			alert('Не удалось изменить статус машины')
+			alert(
+				'Не удалось изменить статус машины, возможно её занял другой пользователь или она сломалась',
+			)
+			try {
+				const response = await api.get('/api/machines')
+				setMachines(response.data)
+			} catch (refreshErr) {
+				console.error('Не удалось обновить список машин:', refreshErr)
+				window.location.reload()
+			}
+		}
+	}
+
+	const markAsBroken = async (machineId: number) => {
+		console.log('markAsFixed вызвана')
+		try {
+			const response = await api.patch(`/api/machines/${machineId}`, {
+				status: 'broken',
+			})
+
+			setMachines(prevMachines =>
+				prevMachines.map(machine =>
+					machine.id === machineId ? response.data : machine,
+				),
+			)
+		} catch (err: any) {
+			console.error('Ошибка:', err)
+			alert(
+				err.response?.data?.detail ||
+					'Не удалось отметить машину как неисправную',
+			)
+		}
+	}
+
+	const markAsFixed = async (machineId: number) => {
+		try {
+			const response = await api.patch(`/api/machines/${machineId}`, {
+				status: 'free',
+			})
+
+			setMachines(prevMachines =>
+				prevMachines.map(machine =>
+					machine.id === machineId ? response.data : machine,
+				),
+			)
+		} catch (err: any) {
+			console.error('Ошибка:', err)
+			alert(
+				err.response?.data?.detail ||
+					'Не удалось отметить машину как исправную',
+			)
+		}
+	}
+
+	const addMachine = async () => {
+		const nextNumber = machines.length + 1
+		const name = `Стиральная машина №${nextNumber}`
+		try {
+			const response = await api.post('/api/machines/', { name })
+			setMachines(prev => [...prev, response.data])
+		} catch (err: any) {
+			console.error('Ошибка:', err)
+			alert(err.response?.data?.detail || 'Не удалось добавить машину')
+		}
+	}
+
+	const deleteMachine = async () => {
+		if (!machineToDelete) return
+
+		try {
+			await api.delete(`/api/machines/${machineToDelete.id}`)
+			setMachines(prev => prev.filter(m => m.id !== machineToDelete.id))
+			setDeleteModalOpened(false)
+			setMachineToDelete(null)
+		} catch (err: any) {
+			console.error('Ошибка:', err)
+			alert(err.response?.data?.detail || 'Не удалось удалить машину')
 		}
 	}
 
@@ -173,14 +239,30 @@ function RouteComponent() {
 
 	if (error) {
 		return (
-			<div style={{ padding: '48px', color: 'red', textAlign: 'center' }}>
-				{error}
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					height: '100dvh',
+				}}
+			>
+				<div style={{ color: '#ff4848', fontSize: '18px' }}>{error}</div>
 			</div>
 		)
 	}
 
 	return (
 		<>
+			<DeleteMachineModal
+				opened={deleteModalOpened}
+				onClose={() => {
+					setDeleteModalOpened(false)
+					setMachineToDelete(null)
+				}}
+				onConfirm={deleteMachine}
+				machineName={machineToDelete?.name || ''}
+			/>
 			<ReportMachineModal
 				opened={problemModalOpened}
 				onClose={() => setProblemModalOpened(false)}
@@ -252,125 +334,319 @@ function RouteComponent() {
 						alignContent: 'flex-start',
 					}}
 				>
-					{machines.map(machine => {
-						const styles = getMachineStyles(machine.status)
-						const IconComponent = styles.Icon
-						const isCurrentUserOccupier =
-							machine.occupiedById === currentUser?.id
+					{[...machines]
+						.sort((a, b) => a.id - b.id)
+						.map(machine => {
+							const styles = getMachineStyles(machine.status)
+							const IconComponent = styles.Icon
+							const isCurrentUserOccupier =
+								machine.occupied_by_id === currentUser?.id
 
-						return (
-							<div
-								key={machine.id}
-								style={{
-									width: 'calc(33.33% - 8px)',
-									height: '340px',
-									backgroundColor: '#fff',
-									borderRadius: '24px',
-									border: '1px solid #D3E4FE',
-									padding: '24px',
-									boxShadow: '#24389c14 0px 4px 12px',
-									color: '#0B1C30',
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-									justifyContent: 'space-between',
-								}}
-							>
+							return (
 								<div
+									key={machine.id}
 									style={{
-										backgroundColor: styles.bgColor,
-										padding: '32px 32px 24px 32px',
-										borderRadius: '50%',
+										width: 'calc(33.33% - 8px)',
+										height: '340px',
+										backgroundColor: '#fff',
+										borderRadius: '24px',
+										border: '1px solid #D3E4FE',
+										padding: '24px',
+										boxShadow: '#24389c14 0px 4px 12px',
+										color: '#0B1C30',
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										position: 'relative',
 									}}
 								>
-									<IconComponent size={48} color={styles.iconColor} />
-								</div>
-								<div style={{ textAlign: 'center' }}>
-									<h2 style={{ fontSize: '16px', fontWeight: '600' }}>
-										{machine.name}
-									</h2>
-									<p
-										style={{
-											fontSize: '18px',
-											color:
-												machine.status === 'free'
-													? '#00cc66'
-													: machine.status === 'busy'
-														? '#FFB95F'
-														: '#BA1A1A',
-											textAlign: 'center',
-											marginTop: '16px',
-										}}
-									>
-										{styles.statusText}
-									</p>
-								</div>
-								{machine.status === 'broken' ? (
+									{currentUser?.role === 'employee' && (
+										<div
+											style={{
+												position: 'absolute',
+												top: '12px',
+												right: '12px',
+												cursor: 'pointer',
+												zIndex: 2,
+											}}
+										>
+											<Trash2
+												size={24}
+												color='#999'
+												onClick={e => {
+													e.stopPropagation()
+													setMachineToDelete(machine)
+													setDeleteModalOpened(true)
+												}}
+												style={{ transition: 'color 0.2s' }}
+												onMouseEnter={e =>
+													(e.currentTarget.style.color = '#e74c3c')
+												}
+												onMouseLeave={e =>
+													(e.currentTarget.style.color = '#999')
+												}
+											/>
+										</div>
+									)}
 									<div
-										style={{
-											backgroundColor: styles.buttonBg,
-											color: styles.buttonColor,
-											border: 'none',
-											padding: '10px 20px',
-											width: '100%',
-											borderRadius: '20px',
-											fontSize: '14px',
-											fontWeight: '500',
-											textAlign: 'center',
-											opacity: 0.6,
-										}}
-									>
-										{styles.buttonText}
-									</div>
-								) : (
-									<button
-										onClick={() =>
-											toggleMachineStatus(machine.id, machine.status)
+										onClick={
+											currentUser?.role === 'employee' &&
+											machine.status !== 'broken'
+												? () => markAsBroken(machine.id)
+												: undefined
 										}
 										style={{
-											backgroundColor: styles.buttonBg,
-											color: styles.buttonColor,
-											border: 'none',
-											padding: '10px 20px',
-											width: '100%',
-											borderRadius: '20px',
-											cursor: 'pointer',
-											fontSize: '14px',
-											fontWeight: '500',
-											transition: 'all 0.2s',
-											opacity:
-												machine.status === 'busy' && !isCurrentUserOccupier
-													? 0.5
-													: 1,
+											backgroundColor: styles.bgColor,
+											padding: '32px 32px 24px 32px',
+											borderRadius: '50%',
 											cursor:
-												machine.status === 'busy' && !isCurrentUserOccupier
-													? 'not-allowed'
-													: 'pointer',
+												currentUser?.role === 'employee' &&
+												machine.status !== 'broken'
+													? 'pointer'
+													: 'default',
+											transition: 'all 0.3s ease',
+											position: 'relative',
 										}}
-										disabled={
-											machine.status === 'busy' && !isCurrentUserOccupier
-										}
 										onMouseEnter={e => {
 											if (
-												!(machine.status === 'busy' && !isCurrentUserOccupier)
+												currentUser?.role === 'employee' &&
+												machine.status !== 'broken'
 											) {
-												e.currentTarget.style.opacity = '0.8'
+												e.currentTarget.style.backgroundColor = '#ffdad66b'
+												const icon = e.currentTarget.querySelector(
+													'.machine-icon',
+												) as HTMLElement
+												if (icon) icon.style.opacity = '0'
+												const wrench = e.currentTarget.querySelector(
+													'.wrench-icon',
+												) as HTMLElement
+												if (wrench) wrench.style.opacity = '1'
 											}
 										}}
 										onMouseLeave={e => {
 											if (
-												!(machine.status === 'busy' && !isCurrentUserOccupier)
+												currentUser?.role === 'employee' &&
+												machine.status !== 'broken'
 											) {
-												e.currentTarget.style.opacity = '1'
+												e.currentTarget.style.backgroundColor = styles.bgColor
+												const icon = e.currentTarget.querySelector(
+													'.machine-icon',
+												) as HTMLElement
+												if (icon) icon.style.opacity = '1'
+												const wrench = e.currentTarget.querySelector(
+													'.wrench-icon',
+												) as HTMLElement
+												if (wrench) wrench.style.opacity = '0'
 											}
 										}}
 									>
-										{styles.buttonText}
-									</button>
-								)}
+										<IconComponent
+											size={48}
+											color={styles.iconColor}
+											className='machine-icon'
+											style={{ transition: 'opacity 0.3s ease' }}
+										/>
+										{currentUser?.role === 'employee' &&
+											machine.status !== 'broken' && (
+												<Wrench
+													size={48}
+													color='#BA1A1A'
+													className='wrench-icon'
+													style={{
+														position: 'absolute',
+														top: '50%',
+														left: '50%',
+														transform: 'translate(-50%, -50%)',
+														opacity: 0,
+														transition: 'opacity 0.3s ease',
+													}}
+												/>
+											)}
+									</div>
+									<div style={{ textAlign: 'center' }}>
+										<h2 style={{ fontSize: '16px', fontWeight: '600' }}>
+											{machine.name}
+										</h2>
+										<div
+											style={{
+												display: 'flex',
+												flexDirection: 'row',
+												justifyContent: 'center',
+												marginTop: '16px',
+												alignContent: 'center',
+												gap: '8px',
+											}}
+										>
+											<p
+												style={{
+													fontSize: '18px',
+													color:
+														machine.status === 'free'
+															? '#00cc66'
+															: machine.status === 'busy'
+																? '#FFB95F'
+																: '#BA1A1A',
+													textAlign: 'center',
+												}}
+											>
+												{styles.statusText}{' '}
+											</p>
+											{machine.status === 'busy' && isCurrentUserOccupier && (
+												<p
+													style={{
+														fontSize: '18px',
+														color: '#603B00',
+														fontWeight: '600',
+													}}
+												>
+													{' '}
+													(Вами)
+												</p>
+											)}
+										</div>
+									</div>
+									{currentUser?.role === 'employee' &&
+									machine.status === 'broken' ? (
+										<button
+											onClick={() => markAsFixed(machine.id)}
+											style={{
+												backgroundColor: '#ffdad66b',
+												color: '#BA1A1A',
+												border: 'none',
+												padding: '10px 20px',
+												width: '100%',
+												borderRadius: '20px',
+												cursor: 'pointer',
+												fontSize: '14px',
+												fontWeight: '500',
+												transition: 'all 0.2s',
+											}}
+											onMouseEnter={e => {
+												e.currentTarget.style.opacity = '0.8'
+											}}
+											onMouseLeave={e => {
+												e.currentTarget.style.opacity = '1'
+											}}
+										>
+											Исправна
+										</button>
+									) : machine.status === 'broken' ? (
+										<div
+											style={{
+												backgroundColor: styles.buttonBg,
+												color: styles.buttonColor,
+												border: 'none',
+												padding: '10px 20px',
+												width: '100%',
+												borderRadius: '20px',
+												fontSize: '14px',
+												fontWeight: '500',
+												textAlign: 'center',
+												opacity: 0.6,
+											}}
+										>
+											{styles.buttonText}
+										</div>
+									) : (
+										<button
+											onClick={() =>
+												toggleMachineStatus(machine.id, machine.status)
+											}
+											style={{
+												backgroundColor: styles.buttonBg,
+												color: styles.buttonColor,
+												border: 'none',
+												padding: '10px 20px',
+												width: '100%',
+												borderRadius: '20px',
+												fontSize: '14px',
+												fontWeight: '500',
+												transition: 'all 0.2s',
+												opacity:
+													machine.status === 'busy' && !isCurrentUserOccupier
+														? 0.5
+														: 1,
+												cursor:
+													machine.status === 'busy' && !isCurrentUserOccupier
+														? 'not-allowed'
+														: 'pointer',
+											}}
+											disabled={
+												machine.status === 'busy' && !isCurrentUserOccupier
+											}
+											onMouseEnter={e => {
+												if (
+													!(machine.status === 'busy' && !isCurrentUserOccupier)
+												) {
+													e.currentTarget.style.opacity = '0.8'
+												}
+											}}
+											onMouseLeave={e => {
+												if (
+													!(machine.status === 'busy' && !isCurrentUserOccupier)
+												) {
+													e.currentTarget.style.opacity = '1'
+												}
+											}}
+										>
+											{styles.buttonText}
+										</button>
+									)}
+								</div>
+							)
+						})}
+					{currentUser?.role === 'employee' && (
+						<div
+							onClick={() => addMachine()}
+							style={{
+								width: 'calc(33.33% - 8px)',
+								height: '340px',
+								backgroundColor: '#fff',
+								borderRadius: '24px',
+								border: '2px dashed #D3E4FE',
+								padding: '24px',
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center',
+								cursor: 'pointer',
+								transition: 'all 0.2s',
+								gap: '16px',
+							}}
+							onMouseEnter={e => {
+								e.currentTarget.style.borderColor = '#6060f0'
+								e.currentTarget.style.backgroundColor = '#F8F9FF'
+							}}
+							onMouseLeave={e => {
+								e.currentTarget.style.borderColor = '#D3E4FE'
+								e.currentTarget.style.backgroundColor = '#fff'
+							}}
+						>
+							<div
+								style={{
+									width: '80px',
+									height: '80px',
+									borderRadius: '50%',
+									backgroundColor: '#E5EEFF',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+								}}
+							>
+								<Plus size={40} color='#6060f0' />
 							</div>
-						)
-					})}
+							<span
+								style={{
+									color: '#6060f0',
+									fontSize: '16px',
+									fontWeight: '500',
+								}}
+							>
+								Добавить машину
+							</span>
+						</div>
+					)}
 				</div>
 				<div
 					style={{
@@ -474,7 +750,7 @@ function RouteComponent() {
 								maxHeight: '500px',
 								overflowY: 'auto',
 								display: 'flex',
-								flexDirection: 'column',
+								flexDirection: 'column-reverse',
 								gap: '12px',
 							}}
 						>
@@ -515,13 +791,13 @@ function RouteComponent() {
 												</span>
 											</div>
 											<div style={{ fontSize: '12px', color: '#666' }}>
-												Кто занял: {machine.occupiedBy || 'Администратор'}
-												{machine.occupiedByBlock &&
-													machine.occupiedByRole !== 'employee' && (
+												Кто занял: {machine.occupied_by || 'Администратор'}
+												{machine.occupied_by_block &&
+													machine.occupied_by_role !== 'employee' && (
 														<>
 															{' '}
-															{'/'} {machine.occupiedByBlock} (
-															{machine.occupiedByRoomType})
+															{'/'} {machine.occupied_by_block} (
+															{machine.occupied_by_room_type})
 														</>
 													)}
 											</div>
@@ -532,7 +808,7 @@ function RouteComponent() {
 													marginTop: '4px',
 												}}
 											>
-												Когда: {machine.occupiedAt}
+												Когда: {machine.occupied_at}
 											</div>
 										</div>
 									))

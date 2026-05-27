@@ -1,14 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { BrushCleaning, Eye, Heater, Paintbrush } from 'lucide-react'
+import { BrushCleaning, Eye, Heater, Paintbrush, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { auth, User } from '../../lib/auth'
+import api from '../../lib/api'
+import type { User as UserType } from '../../lib/auth'
+import { auth } from '../../lib/auth'
 
 type Duty = {
 	id: number
-	student: User
-	floor: number
+	student: UserType
+	floor?: number
 	date: string
-	completed: boolean
 }
 
 export const Route = createFileRoute('/_authenticated/duties')({
@@ -19,14 +20,15 @@ function RouteComponent() {
 	const currentUser = auth.getUser()
 	const [duties, setDuties] = useState<Duty[]>([])
 	const [loading, setLoading] = useState(true)
-	const [allStudents, setAllStudents] = useState<User[]>([])
+	const [allStudents, setAllStudents] = useState<UserType[]>([])
 
 	useEffect(() => {
 		const fetchStudents = async () => {
 			try {
-				const response = await fetch('https://f3b0cd06c4aa4730.mokky.dev/users')
-				const data = await response.json()
-				const students = data.filter((user: User) => user.role === 'student')
+				const response = await api.get('/api/users/')
+				const students = response.data.filter(
+					(user: UserType) => user.role === 'student',
+				)
 				setAllStudents(students)
 			} catch (error) {
 				console.error('Ошибка загрузки студентов:', error)
@@ -41,14 +43,16 @@ function RouteComponent() {
 		if (allStudents.length > 0 && currentUser) {
 			const generatedDuties = generateDutiesForTwoWeeks(
 				allStudents,
-				currentUser as User,
+				currentUser as UserType,
 			)
 			setDuties(generatedDuties)
 		}
-	}, [allStudents, currentUser])
+	}, [allStudents, currentUser?.id])
 
 	const refreshData = () => {
-		setDuties(generateDutiesForTwoWeeks(allStudents, currentUser))
+		if (currentUser) {
+			setDuties(generateDutiesForTwoWeeks(allStudents, currentUser))
+		}
 	}
 
 	useEffect(() => {
@@ -63,39 +67,47 @@ function RouteComponent() {
 		}, timeUntilMidnight)
 
 		return () => clearTimeout(timer)
-	}, [allStudents, currentUser])
+	}, [allStudents, currentUser?.id])
 
 	const generateDutiesForTwoWeeks = (
-		students: User[],
-		currentUser: User,
+		students: UserType[],
+		currentUser: UserType,
 	): Duty[] => {
-		const studentsByBlock: Record<string, User[]> = {}
+		const twoRoom: UserType[] = []
+		const threeRoom: UserType[] = []
+
 		students.forEach(student => {
-			const block = student.block || 'unknown'
-			if (!studentsByBlock[block]) {
-				studentsByBlock[block] = []
+			if (student.room_type === 2) {
+				twoRoom.push(student)
+			} else if (student.room_type === 3) {
+				threeRoom.push(student)
+			} else {
+				twoRoom.push(student)
 			}
-			studentsByBlock[block].push(student)
 		})
 
-		const sortedBlocks = Object.keys(studentsByBlock).sort()
+		const sortByBlockAndRoom = (a: UserType, b: UserType) => {
+			const blockA = parseInt(a.block || '0')
+			const blockB = parseInt(b.block || '0')
+			if (blockA !== blockB) return blockA - blockB
+			return (a.room || '').localeCompare(b.room || '')
+		}
 
-		const dutyQueue: User[] = []
+		twoRoom.sort(sortByBlockAndRoom)
+		threeRoom.sort(sortByBlockAndRoom)
 
-		sortedBlocks.forEach(block => {
-			const blockStudents = studentsByBlock[block]
-			blockStudents.sort((a, b) => {
-				if (a.room !== b.room) return (a.room || '').localeCompare(b.room || '')
-				return a.id - b.id
-			})
-			dutyQueue.push(...blockStudents)
-		})
+		const dutyQueue: UserType[] = [...twoRoom, ...threeRoom]
 
-		let startIndex = dutyQueue.findIndex(s => s.id === currentUser.id)
-		if (startIndex === -1) startIndex = 0
+		if (dutyQueue.length === 0) return []
+
+		const today = new Date()
+		const startOfYear = new Date(today.getFullYear(), 0, 0)
+		const dayOfYear = Math.floor(
+			(today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24),
+		)
+		const startIndex = dayOfYear % dutyQueue.length
 
 		const duties: Duty[] = []
-		const today = new Date()
 
 		for (let i = 0; i < 14; i++) {
 			const date = new Date(today)
@@ -110,7 +122,6 @@ function RouteComponent() {
 				student: student,
 				floor: student.floor,
 				date: dateStr,
-				completed: false,
 			})
 		}
 
@@ -228,59 +239,113 @@ function RouteComponent() {
 							{dates.map(date => {
 								const dayDuties = dutiesByDate[date] || []
 								const today = isToday(date)
+								const isMyDuty = dayDuties.some(
+									duty => duty.student.id === currentUser?.id,
+								)
 
 								return (
 									<div
 										key={date}
 										style={{
-											backgroundColor: today ? '#6060f0' : '#eff4ff',
+											backgroundColor: today
+												? '#6060f0'
+												: isMyDuty
+													? '#E8F0FE'
+													: '#eff4ff',
 											borderRadius: '16px',
-											border: today ? '2px solid #6060f0' : '1px solid #D3E4FE',
+											border: 'none',
 											padding: '16px',
-											height: '220px',
+											height: '100%',
 											width: '80%',
 											minHeight: '120px',
 											transition: 'all 0.2s',
 											color: today ? '#fff' : '',
+											...(isMyDuty && !today
+												? {
+														position: 'relative',
+														zIndex: 0,
+														overflow: 'hidden',
+														boxShadow: 'none',
+													}
+												: {
+														border: today
+															? '2px solid #6060f0'
+															: '1px solid #D3E4FE',
+													}),
 										}}
 									>
+										{isMyDuty && !today && (
+											<div
+												style={{
+													content: '""',
+													position: 'absolute',
+													zIndex: -2,
+													left: '-50%',
+													top: '-50%',
+													width: '200%',
+													height: '200%',
+													background:
+														'conic-gradient(#BFE2FF, #6060f0, #BFE2FF, #6060f0, #BFE2FF)',
+													animation: 'spin 4s linear infinite',
+												}}
+											/>
+										)}
+										{isMyDuty && !today && (
+											<div
+												style={{
+													content: '""',
+													position: 'absolute',
+													zIndex: -1,
+													left: '3px',
+													top: '3px',
+													right: '3px',
+													bottom: '3px',
+													background: '#E8F0FE',
+													borderRadius: '13px',
+												}}
+											/>
+										)}
 										<div
 											style={{
+												position: 'relative',
+												zIndex: 1,
 												display: 'flex',
 												flexDirection: 'column',
 												height: '100%',
 												justifyContent: 'space-between',
 											}}
 										>
-											<div
-												style={{
-													fontSize: '20px',
-													fontWeight: '600',
-													color: today ? '#fff' : '#333',
-													marginBottom: '8px',
-													display: 'flex',
-													justifyContent: 'space-between',
-													alignItems: 'center',
-												}}
-											>
-												<span
+											<div>
+												<div
 													style={{
 														fontSize: '20px',
-														color: today ? '#fff' : '#6060f0',
 														fontWeight: '600',
+														color: today ? '#fff' : '#333',
+														marginBottom: '8px',
+														display: 'flex',
+														justifyContent: 'space-between',
+														alignItems: 'center',
 													}}
 												>
-													{formatDate(date)}
-												</span>
-												<span
-													style={{
-														fontSize: '18px',
-														color: today ? '#fff' : '#666',
-														fontWeight: '400',
-													}}
-												>
-													{getDayOfWeek(date).slice(0, 2)}
-												</span>
+													<span
+														style={{
+															fontSize: '20px',
+															color: today ? '#fff' : '#6060f0',
+															fontWeight: '600',
+														}}
+													>
+														{formatDate(date)}
+													</span>
+													<span
+														style={{
+															fontSize: '18px',
+															color: today ? '#fff' : '#666',
+															fontWeight: '400',
+														}}
+													>
+														{getDayOfWeek(date).slice(0, 2)}
+													</span>
+												</div>
 											</div>
 
 											<div
@@ -311,17 +376,26 @@ function RouteComponent() {
 																	gap: '2px',
 																}}
 															>
-																<img
-																	src={duty.student.photo}
-																	alt=''
-																	style={{
-																		width: '80px',
-																		height: '80px',
-																		borderRadius: '50%',
-																		marginBottom: '8px',
-																		objectFit: 'cover',
-																	}}
-																/>
+																{duty.student?.photo ? (
+																	<img
+																		src={duty.student.photo}
+																		alt=''
+																		style={{
+																			width: '80px',
+																			height: '80px',
+																			borderRadius: '50%',
+																			marginBottom: '8px',
+																			objectFit: 'cover',
+																		}}
+																	/>
+																) : (
+																	<User
+																		size={50}
+																		color={today ? '#fff' : '#6060f0'}
+																		style={{ marginBottom: '16px' }}
+																	/>
+																)}
+
 																<div>
 																	<h3
 																		style={{
@@ -330,7 +404,8 @@ function RouteComponent() {
 																			margin: 0,
 																		}}
 																	>
-																		{duty.student.name} {duty.student.surname}
+																		{duty.student.name} <br />
+																		{duty.student.surname}
 																	</h3>
 																</div>
 															</div>
@@ -343,7 +418,7 @@ function RouteComponent() {
 																}}
 															>
 																Блок {duty.student.block} (
-																{duty.student.roomType})
+																{duty.student.room_type})
 															</div>
 														</div>
 													))

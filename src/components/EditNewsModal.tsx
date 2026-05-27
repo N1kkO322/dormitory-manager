@@ -1,7 +1,6 @@
-// components/EditNewsModal.tsx
 import { Checkbox, Input, Modal, Select, Textarea } from '@mantine/core'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
+import api from '../lib/api'
 
 type EditNewsModalProps = {
 	opened: boolean
@@ -18,7 +17,7 @@ type NewsItem = {
 	priority: string
 	author: string
 	created: string
-	imageUrl?: string
+	image_url?: string
 }
 
 export function EditNewsModal({
@@ -45,7 +44,7 @@ export function EditNewsModal({
 				content: news.content,
 				priority: news.priority,
 				author: news.author,
-				imageUrl: news.imageUrl || '',
+				imageUrl: news.image_url || '',
 			})
 		}
 	}, [news])
@@ -57,9 +56,12 @@ export function EditNewsModal({
 		setSubmitting(true)
 
 		try {
-			await axios.patch(`https://f3b0cd06c4aa4730.mokky.dev/news/${news.id}`, {
-				...formData,
-				created: news.created,
+			await api.patch(`/api/news/${news.id}`, {
+				type: formData.type,
+				title: formData.title,
+				content: formData.content,
+				priority: formData.priority,
+				image_url: formData.imageUrl || null,
 			})
 
 			onSuccess()
@@ -110,7 +112,9 @@ export function EditNewsModal({
 					<div style={{ width: '45%' }}>
 						<Select
 							value={formData.type}
-							onChange={value => setFormData({ ...formData, type: value })}
+							onChange={value =>
+								setFormData({ ...formData, type: value || '' })
+							}
 							data={[
 								{ value: 'Уведомление', label: 'Уведомление' },
 								{ value: 'Событие', label: 'Событие' },
@@ -139,7 +143,7 @@ export function EditNewsModal({
 							}}
 						>
 							<Checkbox
-								size={24}
+								size='md'
 								checked={formData.priority === 'high'}
 								onChange={e => {
 									setFormData({

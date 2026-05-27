@@ -1,58 +1,60 @@
+import emailjs from '@emailjs/browser'
 import { Modal, Textarea } from '@mantine/core'
 import { useState } from 'react'
+import { auth } from '../lib/auth'
 
 type ReportIncorrectModalProps = {
 	opened: boolean
 	onClose: () => void
-	infoType?: string
 }
 
 export function ReportIncorrectModal({
 	opened,
 	onClose,
-	infoType = 'информации',
 }: ReportIncorrectModalProps) {
 	const [submitting, setSubmitting] = useState(false)
-	const [formData, setFormData] = useState({
-		description: '',
-		isUrgent: false,
-	})
+	const [description, setDescription] = useState('')
+	const [error, setError] = useState(false)
 
-	const [errors, setErrors] = useState({
-		description: false,
-	})
+	const user = auth.getUser()
 
 	const handleClose = () => {
-		setFormData({ description: '', isUrgent: false })
-		setErrors({ description: false })
+		setDescription('')
+		setError(false)
 		onClose()
 	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
-		if (!formData.description.trim()) {
-			setErrors({ description: true })
+		if (!description.trim()) {
+			setError(true)
 			return
 		}
 
 		setSubmitting(true)
 
-		setTimeout(() => {
-			console.log('Сообщение о некорректности:', {
-				infoType,
-				description: formData.description,
-				isUrgent: formData.isUrgent,
-				date: new Date().toLocaleString('ru-RU'),
-			})
-
-			alert(
-				'Сообщение отправлено! Спасибо за обратную связь. Мы проверим информацию.',
+		try {
+			await emailjs.send(
+				'service_clzsnlq',
+				'template_xeq7lcn',
+				{
+					userName:
+						`${user?.surname || ''} ${user?.name || ''} ${user?.middle_name || ''}`.trim(),
+					userRole: user?.role === 'student' ? 'Студент' : 'Сотрудник',
+					description: description,
+				},
+				'B52GJ6Syb6iu22gEZ',
 			)
 
+			alert('Сообщение отправлено! Спасибо за обратную связь.')
 			handleClose()
+		} catch (err) {
+			console.error('Ошибка:', err)
+			alert('Не удалось отправить сообщение')
+		} finally {
 			setSubmitting(false)
-		}, 1000)
+		}
 	}
 
 	return (
@@ -83,17 +85,15 @@ export function ReportIncorrectModal({
 						Опишите, какая информация некорректна
 					</label>
 					<Textarea
-						value={formData.description}
+						value={description}
 						onChange={e => {
-							setFormData({ ...formData, description: e.target.value })
-							if (errors.description) {
-								setErrors({ description: false })
-							}
+							setDescription(e.target.value)
+							if (error) setError(false)
 						}}
 						required
 						rows={6}
 						placeholder='Например: неверный номер комнаты'
-						error={errors.description ? 'Поле не может быть пустым' : false}
+						error={error ? 'Поле не может быть пустым' : false}
 						styles={{
 							input: {
 								fontSize: '16px',
@@ -102,7 +102,6 @@ export function ReportIncorrectModal({
 						style={{
 							width: '100%',
 							borderRadius: '12px',
-							// fontSize: '14px',
 							resize: 'vertical',
 						}}
 					/>

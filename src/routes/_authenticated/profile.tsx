@@ -16,10 +16,10 @@ export const Route = createFileRoute('/_authenticated/profile')({
 })
 
 function RouteComponent() {
-	// const [loading, setLoading] = useState(true)
 	const [incorrectModalOpened, setIncorrectModalOpened] = useState(false)
 
 	const user = auth.getUser()
+	console.log(user)
 	const isStudent = auth.isStudent()
 
 	console.log(user)
@@ -45,7 +45,6 @@ function RouteComponent() {
 			<ReportIncorrectModal
 				opened={incorrectModalOpened}
 				onClose={() => setIncorrectModalOpened(false)}
-				infoType='дежурства'
 			/>
 
 			<div
@@ -97,7 +96,7 @@ function RouteComponent() {
 							<div
 								style={{
 									// backgroundColor: '#E5EEFF',
-									padding: '36px',
+									padding: user?.photo ? '0px' : '36px',
 									borderRadius: '50%',
 									display: 'flex',
 									alignItems: 'center',
@@ -116,7 +115,7 @@ function RouteComponent() {
 										}}
 									/>
 								) : (
-									<User size={40} color='#6060f0' />
+									<User size={60} color='#6060f0' />
 								)}
 							</div>
 						</div>
@@ -136,7 +135,7 @@ function RouteComponent() {
 								}}
 							>
 								<h2 style={{ fontSize: '24px', fontWeight: '600' }}>
-									{user?.surname} {user?.name} {user?.middleName}
+									{user?.surname} {user?.name} {user?.middle_name}
 								</h2>
 
 								<p style={{ color: '#6060f0' }}>
@@ -184,7 +183,7 @@ function RouteComponent() {
 												}}
 											>
 												<div style={{ color: '#454652', fontSize: '14px' }}>
-													Комната
+													Блок
 												</div>
 												<div style={{ fontWeight: '600', fontSize: '18px' }}>
 													{user?.room}
@@ -350,7 +349,7 @@ function RouteComponent() {
 									<div>
 										<div style={{ fontSize: '12px', color: '#666' }}>ФИО</div>
 										<div style={{ fontWeight: '500' }}>
-											{user?.emergencyContact?.name}
+											{user?.emergency_contact_name}
 										</div>
 									</div>
 									<div>
@@ -358,7 +357,7 @@ function RouteComponent() {
 											Кем приходится
 										</div>
 										<div style={{ fontWeight: '500' }}>
-											{user?.emergencyContact?.relation}
+											{user?.emergency_contact_relation}
 										</div>
 									</div>
 									<div>
@@ -366,7 +365,7 @@ function RouteComponent() {
 											Телефон
 										</div>
 										<div style={{ fontWeight: '500' }}>
-											{formatPhone(user?.emergencyContact?.phone)}
+											{formatPhone(user?.emergency_contact_phone)}
 										</div>
 									</div>
 								</div>
