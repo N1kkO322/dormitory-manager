@@ -1,7 +1,7 @@
 import { MantineProvider } from '@mantine/core'
 import '@mantine/core/styles.css'
 import { createRootRoute, Outlet, redirect } from '@tanstack/react-router'
-import { auth, isPublicRoute } from '../lib/auth'
+import { auth, isAuthRoute, isPublicRoute } from '../lib/auth'
 import './../index.css'
 
 function RootLayout() {
@@ -42,7 +42,7 @@ export const Route = createRootRoute({
 			})
 		}
 
-		if (isAuthenticated && isPublic) {
+		if (isAuthenticated && isAuthRoute(currentPath)) {
 			console.log(
 				'Пользователь уже авторизован. Перенаправляем с auth страниц.',
 			)

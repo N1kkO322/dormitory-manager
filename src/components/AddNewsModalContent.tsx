@@ -1,10 +1,21 @@
 import { Checkbox, Input, Select, Textarea } from '@mantine/core'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import api from '../lib/api'
 
 type AddNewsModalContentProps = {
 	onSuccess: () => void
 	onClose: () => void
+}
+
+const fileInputStyle = {
+	width: '100%',
+	border: '1px solid #D3E4FE',
+	borderRadius: '12px',
+	padding: '12px 14px',
+	fontSize: '14px',
+	color: '#0B1C30',
+	outline: 'none',
+	backgroundColor: '#fff',
 }
 
 export function AddNewsModalContent({
@@ -18,13 +29,23 @@ export function AddNewsModalContent({
 		content: '',
 		priority: 'medium',
 		author: 'Администрация',
-		imageUrl: '',
+		image: null as File | null,
 	})
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [errors, setErrors] = useState({ title: false })
+	const [, setErrors] = useState({ title: false })
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const imagePreview = useMemo(() => {
+		if (!formData.image) return null
+		return URL.createObjectURL(formData.image)
+	}, [formData.image])
+
+	useEffect(() => {
+		return () => {
+			if (imagePreview) URL.revokeObjectURL(imagePreview)
+		}
+	}, [imagePreview])
+
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 
 		if (!formData.title.trim()) {
@@ -35,12 +56,17 @@ export function AddNewsModalContent({
 		setSubmitting(true)
 
 		try {
-			await api.post('/api/news/', {
-				type: formData.type,
-				title: formData.title,
-				content: formData.content,
-				priority: formData.priority,
-				image_url: formData.imageUrl || null,
+			const data = new FormData()
+			data.append('type', formData.type)
+			data.append('title', formData.title)
+			data.append('content', formData.content)
+			data.append('priority', formData.priority)
+			if (formData.image) {
+				data.append('image', formData.image)
+			}
+
+			await api.post('/api/news/', data, {
+				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
 			onSuccess()
@@ -164,17 +190,45 @@ export function AddNewsModalContent({
 				<label
 					style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}
 				>
-					URL картинки (необязательно)
+					Изображение (необязательно)
 				</label>
-				<Input
-					value={formData.imageUrl}
-					onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-					placeholder='https://example.com/image.jpg'
-					style={{
-						width: '100%',
-						borderRadius: '12px',
-						fontSize: '14px',
-					}}
+				{imagePreview && (
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							padding: '10px',
+							border: '1px solid #D3E4FE',
+							borderRadius: '12px',
+							backgroundColor: '#fff',
+							marginBottom: '8px',
+						}}
+					>
+						<img
+							src={imagePreview}
+							alt='Предпросмотр'
+							style={{
+								width: '72px',
+								height: '72px',
+								borderRadius: '8px',
+								objectFit: 'cover',
+								flex: '0 0 72px',
+							}}
+						/>
+						<div style={{ color: '#454652', fontSize: '13px' }}>
+							{formData.image?.name}
+						</div>
+					</div>
+				)}
+				<input
+					key={formData.image?.name || 'empty-image'}
+					type='file'
+					accept='image/*'
+					onChange={e =>
+						setFormData({ ...formData, image: e.target.files?.[0] || null })
+					}
+					style={fileInputStyle}
 				/>
 			</div>
 

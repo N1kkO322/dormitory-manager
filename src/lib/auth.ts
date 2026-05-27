@@ -73,9 +73,15 @@ export const auth = {
 }
 
 export const isPublicRoute = (pathname: string): boolean => {
-	const publicRoutes = ['/auth/login', '/auth/forgotpass']
+	const publicRoutes = ['/auth/login', '/auth/forgotpass', '/reset-password']
 
 	return publicRoutes.some(route => pathname.startsWith(route))
+}
+
+export const isAuthRoute = (pathname: string): boolean => {
+	const authRoutes = ['/auth/login', '/auth/forgotpass']
+
+	return authRoutes.some(route => pathname.startsWith(route))
 }
 
 export const getDashboardPath = (): string => {

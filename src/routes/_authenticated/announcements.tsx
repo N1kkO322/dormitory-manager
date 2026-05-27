@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { AddNewsModalContent } from '../../components/AddNewsModalContent'
 import { DeleteNewsModal } from '../../components/DeleteNewsModal'
 import { EditNewsModal } from '../../components/EditNewsModal'
+import { useUniversalAlert } from '../../components/useUniversalAlert'
 import api from '../../lib/api'
 import type { User } from '../../lib/auth'
 import { auth } from '../../lib/auth'
@@ -28,6 +29,15 @@ type Duty = {
 	date: string
 }
 
+type WeatherResponse = {
+	main?: {
+		temp: number
+	}
+	weather?: {
+		description: string
+	}[]
+}
+
 export const Route = createFileRoute('/_authenticated/announcements')({
 	component: RouteComponent,
 })
@@ -48,12 +58,11 @@ function RouteComponent() {
 	const [weather, setWeather] = useState<{
 		temp: number | null
 		description: string
-		icon: string
 	}>({
 		temp: null,
 		description: '',
-		icon: '',
 	})
+	const { alertModal, openAlert } = useUniversalAlert()
 
 	const user = auth.getUser()
 	const isEmployee = user?.role === 'employee'
@@ -100,7 +109,7 @@ function RouteComponent() {
 			setNewsToDelete(null)
 		} catch (error) {
 			console.error('Ошибка при удалении:', error)
-			alert('Не удалось удалить новость')
+			openAlert('Не удалось удалить новость', { variant: 'error' })
 		}
 	}
 
@@ -160,20 +169,17 @@ function RouteComponent() {
 				setLoading(false)
 			})
 
-		const city = 'Saint Petersburg'
-		const key = '15523bec7eabcc8e0c4814fc65555711'
-		fetch(
-			`https://api.openweathermap.org/data/2.5/weather?units=metric&q=${city}&appid=${key}&lang=ru`,
-		)
-			.then(response => response.json())
-			.then(data => {
+		api
+			.get<WeatherResponse>('/api/weather/')
+			.then(response => {
+				const data = response.data
+				const description = data.weather?.[0]?.description ?? ''
+
 				if (data.main) {
 					setWeather({
 						temp: Math.round(data.main.temp),
-						description: data.weather[0].description,
-						icon: data.weather[0].icon,
+						description,
 					})
-					console.log(data)
 				}
 			})
 			.catch(error => console.error('Ошибка погоды:', error))
@@ -252,6 +258,7 @@ function RouteComponent() {
 				onSuccess={refreshNews}
 				news={newsToEdit}
 			/>
+			{alertModal}
 			<div
 				style={{
 					display: 'flex',

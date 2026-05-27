@@ -13,11 +13,13 @@ import {
 	LogOut,
 	Rss,
 	User,
+	Users,
 	WashingMachine,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-import { auth, User as UserType } from '../lib/auth'
+import { auth } from '../lib/auth'
+import type { User as UserType } from '../lib/auth'
 
 export const Route = createFileRoute('/_authenticated')({
 	component: AuthenticatedLayout,
@@ -77,6 +79,9 @@ function AuthenticatedLayout() {
 	const menuItems = [
 		{ to: '/washing', icon: WashingMachine, label: 'Стиральные машины' },
 		{ to: '/announcements', icon: Rss, label: 'Лента новостей' },
+		...(isEmployee
+			? [{ to: '/users', icon: Users, label: 'Студенты и персонал' }]
+			: []),
 		{ to: '/duties', icon: CalendarCheck, label: 'Дежурства' },
 		{ to: '/profile', icon: User, label: 'Профиль' },
 	]

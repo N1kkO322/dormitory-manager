@@ -1,6 +1,7 @@
 import { Checkbox, Input, Modal, Select, Textarea } from '@mantine/core'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import api from '../lib/api'
+import { useUniversalAlert } from './useUniversalAlert'
 
 type EditNewsModalProps = {
 	opened: boolean
@@ -20,6 +21,17 @@ type NewsItem = {
 	image_url?: string
 }
 
+const fileInputStyle = {
+	width: '100%',
+	border: '1px solid #D3E4FE',
+	borderRadius: '12px',
+	padding: '12px 14px',
+	fontSize: '14px',
+	color: '#0B1C30',
+	outline: 'none',
+	backgroundColor: '#fff',
+}
+
 export function EditNewsModal({
 	opened,
 	onClose,
@@ -33,8 +45,21 @@ export function EditNewsModal({
 		content: '',
 		priority: 'medium',
 		author: 'Администрация',
-		imageUrl: '',
+		image: null as File | null,
+		removeImage: false,
 	})
+	const { alertModal, openAlert } = useUniversalAlert()
+
+	const imagePreview = useMemo(() => {
+		if (!formData.image) return null
+		return URL.createObjectURL(formData.image)
+	}, [formData.image])
+
+	useEffect(() => {
+		return () => {
+			if (imagePreview) URL.revokeObjectURL(imagePreview)
+		}
+	}, [imagePreview])
 
 	useEffect(() => {
 		if (news) {
@@ -44,53 +69,66 @@ export function EditNewsModal({
 				content: news.content,
 				priority: news.priority,
 				author: news.author,
-				imageUrl: news.image_url || '',
+				image: null,
+				removeImage: false,
 			})
 		}
 	}, [news])
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = async (e: { preventDefault(): void }) => {
 		e.preventDefault()
 		if (!news) return
 
 		setSubmitting(true)
 
 		try {
-			await api.patch(`/api/news/${news.id}`, {
-				type: formData.type,
-				title: formData.title,
-				content: formData.content,
-				priority: formData.priority,
-				image_url: formData.imageUrl || null,
+			const data = new FormData()
+			data.append('type', formData.type)
+			data.append('title', formData.title)
+			data.append('content', formData.content)
+			data.append('priority', formData.priority)
+			if (formData.image) {
+				data.append('image', formData.image)
+			} else if (formData.removeImage) {
+				data.append('image', 'null')
+			}
+
+			await api.patch(`/api/news/${news.id}`, data, {
+				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
 			onSuccess()
 			onClose()
 		} catch (error) {
 			console.error('Ошибка при редактировании:', error)
-			alert('Не удалось обновить новость')
+			openAlert('Не удалось обновить новость', { variant: 'error' })
 		} finally {
 			setSubmitting(false)
 		}
 	}
 
+	const currentImageUrl = !formData.removeImage
+		? (imagePreview || news?.image_url || null)
+		: null
+
 	return (
-		<Modal
-			opened={opened}
-			onClose={onClose}
-			title='Редактирование новости'
-			size='xl'
-			centered
-			radius='16px'
-			padding='28px'
-			styles={{
-				title: {
-					fontWeight: 'bold',
-					fontSize: '24px',
-				},
-			}}
-		>
-			<form onSubmit={handleSubmit}>
+		<>
+			<Modal
+				opened={opened}
+				onClose={onClose}
+				title='Редактирование новости'
+				size='xl'
+				centered
+				radius='16px'
+				padding='28px'
+				styles={{
+					title: {
+						fontWeight: 'bold',
+						fontSize: '24px',
+					},
+				}}
+			>
+				<form onSubmit={handleSubmit}>
 				<div
 					style={{
 						display: 'block',
@@ -205,20 +243,81 @@ export function EditNewsModal({
 					<label
 						style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}
 					>
-						URL картинки (необязательно)
+						Изображение (необязательно)
 					</label>
-					<Input
-						value={formData.imageUrl}
+					{currentImageUrl && (
+						<div
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: '12px',
+								padding: '10px',
+								border: '1px solid #D3E4FE',
+								borderRadius: '12px',
+								backgroundColor: '#fff',
+								marginBottom: '8px',
+							}}
+						>
+							<img
+								src={currentImageUrl}
+								alt='Изображение новости'
+								style={{
+									width: '72px',
+									height: '72px',
+									borderRadius: '8px',
+									objectFit: 'cover',
+									flex: '0 0 72px',
+								}}
+							/>
+							<div style={{ color: '#454652', fontSize: '13px' }}>
+								{imagePreview ? formData.image?.name : 'Текущее изображение'}
+							</div>
+						</div>
+					)}
+					<input
+						key={formData.image?.name || (formData.removeImage ? 'removed-image' : 'empty-image')}
+						type='file'
+						accept='image/*'
 						onChange={e =>
-							setFormData({ ...formData, imageUrl: e.target.value })
+							setFormData({
+								...formData,
+								image: e.target.files?.[0] || null,
+								removeImage: false,
+							})
 						}
-						placeholder='https://example.com/image.jpg'
-						style={{
-							width: '100%',
-							borderRadius: '12px',
-							fontSize: '14px',
-						}}
+						style={fileInputStyle}
 					/>
+					{news?.image_url && !formData.image && !formData.removeImage && (
+						<button
+							type='button'
+							onClick={() =>
+								setFormData(prev => ({
+									...prev,
+									image: null,
+									removeImage: true,
+								}))
+							}
+							style={{
+								marginTop: '8px',
+								width: 'fit-content',
+								padding: '10px 14px',
+								border: 'none',
+								borderRadius: '10px',
+								backgroundColor: '#FFE5E5',
+								color: '#e74c3c',
+								cursor: 'pointer',
+								fontSize: '13px',
+								fontWeight: 600,
+							}}
+						>
+							Удалить изображение
+						</button>
+					)}
+					{formData.removeImage && (
+						<div style={{ marginTop: '8px', color: '#e74c3c', fontSize: '13px' }}>
+							Изображение будет удалено после сохранения
+						</div>
+					)}
 				</div>
 
 				<div
@@ -263,7 +362,9 @@ export function EditNewsModal({
 						{submitting ? 'Сохранение...' : 'Сохранить'}
 					</button>
 				</div>
-			</form>
-		</Modal>
+				</form>
+			</Modal>
+			{alertModal}
+		</>
 	)
 }

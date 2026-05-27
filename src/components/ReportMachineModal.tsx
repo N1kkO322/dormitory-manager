@@ -1,8 +1,7 @@
-import emailjs from '@emailjs/browser'
 import { Modal, Select, Textarea } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-import { auth } from '../lib/auth'
+import { useUniversalAlert } from './useUniversalAlert'
 
 type ReportMachineModalProps = {
 	opened: boolean
@@ -22,9 +21,9 @@ export function ReportMachineModal({
 	const [description, setDescription] = useState('')
 	const [selectedMachine, setSelectedMachine] = useState<string | null>(null)
 	const [machines, setMachines] = useState<Machine[]>([])
-	const [error, setError] = useState(false)
-
-	const user = auth.getUser()
+	const [descriptionError, setDescriptionError] = useState(false)
+	const [machineError, setMachineError] = useState(false)
+	const { alertModal, openAlert } = useUniversalAlert()
 
 	useEffect(() => {
 		if (opened) {
@@ -37,92 +36,94 @@ export function ReportMachineModal({
 	const handleClose = () => {
 		setDescription('')
 		setSelectedMachine(null)
-		setError(false)
+		setDescriptionError(false)
+		setMachineError(false)
 		onClose()
 	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
-		if (!description.trim()) {
-			setError(true)
+		const machineName = machines.find(m => m.id === Number(selectedMachine))?.name
+		const hasDescriptionError = !description.trim()
+		const hasMachineError = !machineName
+
+		if (hasDescriptionError || hasMachineError) {
+			setDescriptionError(hasDescriptionError)
+			setMachineError(hasMachineError)
 			return
 		}
 
 		setSubmitting(true)
 
-		const machineName =
-			machines.find(m => m.id === Number(selectedMachine))?.name || 'Не указана'
-
 		try {
-			await emailjs.send(
-				'service_clzsnlq',
-				'template_u2oo4la',
-				{
-					userName:
-						`${user?.surname || ''} ${user?.name || ''} ${user?.middle_name || ''}`.trim(),
-					userRole: user?.role === 'student' ? 'Студент' : 'Сотрудник',
-					machineName: machineName,
-					description: description,
-				},
-				'B52GJ6Syb6iu22gEZ',
-			)
+			await api.post('/api/machines/report-problem', {
+				name: machineName,
+				description: description.trim(),
+			})
 
-			alert('Заявка принята. Спасибо за обратную связь!')
 			handleClose()
+			openAlert('Заявка принята. Спасибо за обратную связь!', {
+				variant: 'success',
+			})
 		} catch (err) {
 			console.error('Ошибка:', err)
-			alert('Не удалось отправить сообщение')
+			openAlert('Не удалось отправить сообщение', { variant: 'error' })
 		} finally {
 			setSubmitting(false)
 		}
 	}
 
 	return (
-		<Modal
-			opened={opened}
-			onClose={handleClose}
-			title='Сообщить о проблеме'
-			size='xl'
-			centered
-			radius='16px'
-			padding='28px'
-			styles={{
-				title: {
-					fontWeight: 'bold',
-					fontSize: '24px',
-				},
-			}}
-		>
-			<form onSubmit={handleSubmit}>
-				<div style={{ marginBottom: '20px' }}>
-					<label
-						style={{
-							display: 'block',
-							marginBottom: '8px',
-							fontWeight: '500',
-						}}
-					>
-						Выберите машину
-					</label>
-					<Select
-						value={selectedMachine}
-						onChange={setSelectedMachine}
-						data={machines.map(m => ({
-							value: String(m.id),
-							label: m.name,
-						}))}
-						placeholder='Выберите машину'
-						styles={{
-							input: {
-								fontSize: '16px',
-								borderRadius: '12px',
-								border: '1px solid #D3E4FE',
-							},
-						}}
-						style={{ width: '100%' }}
-					/>
-				</div>
+		<>
+			<Modal
+				opened={opened}
+				onClose={handleClose}
+				title='Сообщить о проблеме'
+				size='xl'
+				centered
+				radius='16px'
+				padding='28px'
+				styles={{
+					title: {
+						fontWeight: 'bold',
+						fontSize: '24px',
+					},
+				}}
+			>
+				<form onSubmit={handleSubmit}>
+					<div style={{ marginBottom: '20px' }}>
+						<label
+							style={{
+								display: 'block',
+								marginBottom: '8px',
+								fontWeight: '500',
+							}}
+						>
+							Выберите машину
+						</label>
+						<Select
+							value={selectedMachine}
+							onChange={value => {
+								setSelectedMachine(value)
+								if (machineError) setMachineError(false)
+							}}
+							data={machines.map(m => ({
+								value: String(m.id),
+								label: m.name,
+							}))}
+							placeholder='Выберите машину'
+							error={machineError ? 'Выберите машину' : false}
+							styles={{
+								input: {
+									fontSize: '16px',
+									borderRadius: '12px',
+									border: '1px solid #D3E4FE',
+								},
+							}}
+							style={{ width: '100%' }}
+						/>
+					</div>
 
 				<div style={{ marginBottom: '20px' }}>
 					<label
@@ -138,12 +139,12 @@ export function ReportMachineModal({
 						value={description}
 						onChange={e => {
 							setDescription(e.target.value)
-							if (error) setError(false)
+							if (descriptionError) setDescriptionError(false)
 						}}
 						required
 						rows={9}
 						placeholder='Пожалуйста, подробно опишите возникшую проблему'
-						error={error ? 'Поле не может быть пустым' : false}
+						error={descriptionError ? 'Поле не может быть пустым' : false}
 						styles={{
 							input: {
 								fontSize: '16px',
@@ -200,7 +201,9 @@ export function ReportMachineModal({
 						{submitting ? 'Отправка...' : 'Отправить'}
 					</button>
 				</div>
-			</form>
-		</Modal>
+				</form>
+			</Modal>
+			{alertModal}
+		</>
 	)
 }

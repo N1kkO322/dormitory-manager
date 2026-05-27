@@ -41,17 +41,14 @@ function RouteComponent() {
 
 	useEffect(() => {
 		if (allStudents.length > 0 && currentUser) {
-			const generatedDuties = generateDutiesForTwoWeeks(
-				allStudents,
-				currentUser as UserType,
-			)
+			const generatedDuties = generateDutiesForTwoWeeks(allStudents)
 			setDuties(generatedDuties)
 		}
 	}, [allStudents, currentUser?.id])
 
 	const refreshData = () => {
 		if (currentUser) {
-			setDuties(generateDutiesForTwoWeeks(allStudents, currentUser))
+			setDuties(generateDutiesForTwoWeeks(allStudents))
 		}
 	}
 
@@ -69,10 +66,7 @@ function RouteComponent() {
 		return () => clearTimeout(timer)
 	}, [allStudents, currentUser?.id])
 
-	const generateDutiesForTwoWeeks = (
-		students: UserType[],
-		currentUser: UserType,
-	): Duty[] => {
+	const generateDutiesForTwoWeeks = (students: UserType[]): Duty[] => {
 		const twoRoom: UserType[] = []
 		const threeRoom: UserType[] = []
 

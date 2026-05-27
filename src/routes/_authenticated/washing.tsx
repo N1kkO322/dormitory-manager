@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { isAxiosError } from 'axios'
 import {
 	Ban,
 	LoaderPinwheel,
@@ -10,6 +11,7 @@ import {
 import { useEffect, useState } from 'react'
 import { DeleteMachineModal } from '../../components/DeleteMachineModal'
 import { ReportMachineModal } from '../../components/ReportMachineModal'
+import { useUniversalAlert } from '../../components/useUniversalAlert'
 import api from '../../lib/api'
 import { auth } from '../../lib/auth'
 
@@ -29,6 +31,14 @@ export const Route = createFileRoute('/_authenticated/washing')({
 	component: RouteComponent,
 })
 
+const getErrorDetail = (error: unknown, fallback: string) => {
+	if (isAxiosError<{ detail?: string }>(error)) {
+		return error.response?.data?.detail || fallback
+	}
+
+	return fallback
+}
+
 function RouteComponent() {
 	const [machines, setMachines] = useState<WashingMachineType[]>([])
 	const [loading, setLoading] = useState(true)
@@ -37,6 +47,7 @@ function RouteComponent() {
 	const [deleteModalOpened, setDeleteModalOpened] = useState(false)
 	const [machineToDelete, setMachineToDelete] =
 		useState<WashingMachineType | null>(null)
+	const { alertModal, openAlert } = useUniversalAlert()
 
 	const freeCount = machines.filter(m => m.status === 'free').length
 	const busyCount = machines.filter(m => m.status === 'busy').length
@@ -61,21 +72,24 @@ function RouteComponent() {
 		currentStatus: string,
 	) => {
 		if (currentStatus === 'broken') {
-			alert('Эта машина неисправна, обратитесь к администрации')
+			openAlert('Эта машина неисправна, обратитесь к администрации', {
+				variant: 'error',
+			})
 			return
 		}
 
 		const currentUser = auth.getUser()
 		if (!currentUser) {
-			alert('Ошибка: пользователь не найден')
+			openAlert('Ошибка: пользователь не найден', { variant: 'error' })
 			return
 		}
 
 		if (currentStatus === 'busy') {
 			const machine = machines.find(m => m.id === machineId)
 			if (machine?.occupied_by_id !== currentUser.id) {
-				alert(
+				openAlert(
 					'Вы не можете освободить эту машину, так как её занял другой пользователь',
+					{ variant: 'error' },
 				)
 				return
 			}
@@ -95,8 +109,9 @@ function RouteComponent() {
 			)
 		} catch (err) {
 			console.error('Ошибка при изменении статуса:', err)
-			alert(
+			openAlert(
 				'Не удалось изменить статус машины, возможно её занял другой пользователь или она сломалась',
+				{ variant: 'error' },
 			)
 			try {
 				const response = await api.get('/api/machines')
@@ -120,11 +135,11 @@ function RouteComponent() {
 					machine.id === machineId ? response.data : machine,
 				),
 			)
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Ошибка:', err)
-			alert(
-				err.response?.data?.detail ||
-					'Не удалось отметить машину как неисправную',
+			openAlert(
+				getErrorDetail(err, 'Не удалось отметить машину как неисправную'),
+				{ variant: 'error' },
 			)
 		}
 	}
@@ -140,11 +155,11 @@ function RouteComponent() {
 					machine.id === machineId ? response.data : machine,
 				),
 			)
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Ошибка:', err)
-			alert(
-				err.response?.data?.detail ||
-					'Не удалось отметить машину как исправную',
+			openAlert(
+				getErrorDetail(err, 'Не удалось отметить машину как исправную'),
+				{ variant: 'error' },
 			)
 		}
 	}
@@ -155,9 +170,11 @@ function RouteComponent() {
 		try {
 			const response = await api.post('/api/machines/', { name })
 			setMachines(prev => [...prev, response.data])
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Ошибка:', err)
-			alert(err.response?.data?.detail || 'Не удалось добавить машину')
+			openAlert(getErrorDetail(err, 'Не удалось добавить машину'), {
+				variant: 'error',
+			})
 		}
 	}
 
@@ -169,9 +186,11 @@ function RouteComponent() {
 			setMachines(prev => prev.filter(m => m.id !== machineToDelete.id))
 			setDeleteModalOpened(false)
 			setMachineToDelete(null)
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Ошибка:', err)
-			alert(err.response?.data?.detail || 'Не удалось удалить машину')
+			openAlert(getErrorDetail(err, 'Не удалось удалить машину'), {
+				variant: 'error',
+			})
 		}
 	}
 
@@ -267,6 +286,7 @@ function RouteComponent() {
 				opened={problemModalOpened}
 				onClose={() => setProblemModalOpened(false)}
 			/>
+			{alertModal}
 			<div
 				style={{
 					display: 'flex',

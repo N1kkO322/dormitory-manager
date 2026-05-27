@@ -9,16 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotpassRouteImport } from './routes/auth/forgotpass'
 import { Route as AuthenticatedWashingRouteImport } from './routes/_authenticated/washing'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDutiesRouteImport } from './routes/_authenticated/duties'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated/announcements'
+import { Route as AuthenticatedUsersUserIdRouteImport } from './routes/_authenticated/users/$userId'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -48,6 +56,11 @@ const AuthenticatedWashingRoute = AuthenticatedWashingRouteImport.update({
   path: '/washing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -64,87 +77,119 @@ const AuthenticatedAnnouncementsRoute =
     path: '/announcements',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedUsersUserIdRoute =
+  AuthenticatedUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedUsersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/duties': typeof AuthenticatedDutiesRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/users': typeof AuthenticatedUsersRouteWithChildren
   '/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/users/$userId': typeof AuthenticatedUsersUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/duties': typeof AuthenticatedDutiesRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/users': typeof AuthenticatedUsersRouteWithChildren
   '/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/users/$userId': typeof AuthenticatedUsersUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/duties': typeof AuthenticatedDutiesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRouteWithChildren
   '/_authenticated/washing': typeof AuthenticatedWashingRoute
   '/auth/forgotpass': typeof AuthForgotpassRoute
   '/auth/login': typeof AuthLoginRoute
+  '/_authenticated/users/$userId': typeof AuthenticatedUsersUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/$'
+    | '/reset-password'
     | '/announcements'
     | '/duties'
     | '/profile'
+    | '/users'
     | '/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/users/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/reset-password'
     | '/announcements'
     | '/duties'
     | '/profile'
+    | '/users'
     | '/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/users/$userId'
   id:
     | '__root__'
     | '/'
     | '/$'
     | '/_authenticated'
+    | '/reset-password'
     | '/_authenticated/announcements'
     | '/_authenticated/duties'
     | '/_authenticated/profile'
+    | '/_authenticated/users'
     | '/_authenticated/washing'
     | '/auth/forgotpass'
     | '/auth/login'
+    | '/_authenticated/users/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AuthForgotpassRoute: typeof AuthForgotpassRoute
   AuthLoginRoute: typeof AuthLoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -183,6 +228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWashingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -204,13 +256,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnnouncementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/users/$userId': {
+      id: '/_authenticated/users/$userId'
+      path: '/$userId'
+      fullPath: '/users/$userId'
+      preLoaderRoute: typeof AuthenticatedUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedUsersRoute
+    }
   }
 }
+
+interface AuthenticatedUsersRouteChildren {
+  AuthenticatedUsersUserIdRoute: typeof AuthenticatedUsersUserIdRoute
+}
+
+const AuthenticatedUsersRouteChildren: AuthenticatedUsersRouteChildren = {
+  AuthenticatedUsersUserIdRoute: AuthenticatedUsersUserIdRoute,
+}
+
+const AuthenticatedUsersRouteWithChildren =
+  AuthenticatedUsersRoute._addFileChildren(AuthenticatedUsersRouteChildren)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedDutiesRoute: typeof AuthenticatedDutiesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRouteWithChildren
   AuthenticatedWashingRoute: typeof AuthenticatedWashingRoute
 }
 
@@ -218,6 +289,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedDutiesRoute: AuthenticatedDutiesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRouteWithChildren,
   AuthenticatedWashingRoute: AuthenticatedWashingRoute,
 }
 
@@ -229,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   AuthForgotpassRoute: AuthForgotpassRoute,
   AuthLoginRoute: AuthLoginRoute,
 }

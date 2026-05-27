@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { isAxiosError } from 'axios'
+import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
+import { useUniversalAlert } from '../../components/useUniversalAlert'
 import api from '../../lib/api'
 import { auth } from '../../lib/auth'
 
@@ -12,6 +15,8 @@ function RouteComponent() {
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
+	const { alertModal, openAlert } = useUniversalAlert()
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -28,10 +33,12 @@ function RouteComponent() {
 			navigate({ to: '/announcements' })
 			console.log('Вошел:', user.email)
 			console.log(user)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Ошибка:', error)
-			const message = error.response?.data?.detail || 'Ошибка при входе'
-			alert(message)
+			const message = isAxiosError<{ detail?: string }>(error)
+				? error.response?.data?.detail || 'Ошибка при входе'
+				: 'Ошибка при входе'
+			openAlert(message, { variant: 'error' })
 		}
 	}
 
@@ -89,13 +96,25 @@ function RouteComponent() {
 							value={email}
 							onChange={e => setEmail(e.target.value)}
 						/>
-						<input
-							type='text'
-							placeholder='Пароль'
-							className='auth-inputs'
-							value={password}
-							onChange={e => setPassword(e.target.value)}
-						/>
+						<div className='auth-password-field'>
+							<input
+								type={showPassword ? 'text' : 'password'}
+								placeholder='Пароль'
+								className='auth-inputs auth-password-input'
+								value={password}
+								onChange={e => setPassword(e.target.value)}
+							/>
+							<button
+								type='button'
+								className='auth-password-toggle'
+								aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+								aria-pressed={showPassword}
+								title={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+								onClick={() => setShowPassword(value => !value)}
+							>
+								{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
 					</div>
 
 					<button type='submit' className='auth-btns'>
@@ -115,6 +134,7 @@ function RouteComponent() {
 					</div>
 				</form>
 			</div>
+			{alertModal}
 		</>
 	)
 }
