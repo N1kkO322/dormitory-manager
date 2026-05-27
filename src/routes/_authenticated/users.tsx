@@ -1,4 +1,4 @@
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import {
 	Outlet,
 	createFileRoute,
@@ -166,6 +166,7 @@ function RouteComponent() {
 	const [error, setError] = useState<string | null>(null)
 	const [createUserError, setCreateUserError] = useState<string | null>(null)
 	const [opened, { open, close }] = useDisclosure(false)
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	const loadUsers = useCallback(async () => {
 		setLoading(true)
@@ -327,27 +328,27 @@ function RouteComponent() {
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '12dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '12dvh',
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>Студенты и персонал</h2>
-				<p style={{ color: '#454652' }}>
+				<p style={{ color: '#454652', marginTop: isMobile ? '4px' : undefined }}>
 					Поиск, фильтрация и просмотр профилей пользователей
 				</p>
 			</div>
 
 			<div
 				style={{
-					height: '88dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '88dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
 					gap: '24px',
 				}}
 			>
 				<div
 					style={{
-						width: '64%',
+						width: '100%',
 						display: 'flex',
 						flexDirection: 'column',
 						gap: '20px',
@@ -362,7 +363,9 @@ function RouteComponent() {
 							padding: '20px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							display: 'grid',
-							gridTemplateColumns: 'minmax(220px, 1fr) 200px auto',
+							gridTemplateColumns: isMobile
+								? '1fr'
+								: 'minmax(220px, 1fr) 200px auto',
 							gap: '12px',
 							alignItems: 'center',
 						}}
@@ -428,7 +431,7 @@ function RouteComponent() {
 							display: 'flex',
 							flexDirection: 'column',
 							gap: '12px',
-							overflowY: 'auto',
+							overflowY: isMobile ? 'visible' : 'auto',
 							paddingRight: '4px',
 						}}
 					>
@@ -466,11 +469,15 @@ function RouteComponent() {
 									<button
 										key={user.id}
 										type='button'
-										onClick={() => setSelectedUserId(user.id)}
+										onClick={() =>
+											isMobile
+												? openUserProfile(user.id)
+												: setSelectedUserId(user.id)
+										}
 										style={{
 											width: '100%',
-											backgroundColor: isSelected ? '#EFF4FF' : '#fff',
-											border: `1px solid ${isSelected ? '#6060f0' : '#D3E4FE'}`,
+											backgroundColor: isSelected && !isMobile ? '#EFF4FF' : '#fff',
+											border: `1px solid ${isSelected && !isMobile ? '#6060f0' : '#D3E4FE'}`,
 											borderRadius: '20px',
 											padding: '18px 20px',
 											boxShadow: '#24389c14 0px 4px 12px',
@@ -550,49 +557,51 @@ function RouteComponent() {
 					</div>
 				</div>
 
-				<div
-					style={{
-						width: '36%',
-						backgroundColor: '#fff',
-						borderRadius: '24px',
-						border: '1px solid #D3E4FE',
-						padding: '28px',
-						boxShadow: '#24389c14 0px 4px 12px',
-						alignSelf: 'flex-start',
-						minHeight: '520px',
-					}}
-				>
-					{detailsLoading ? (
-						<div
-							style={{
-								minHeight: '460px',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-							}}
-						>
-							<div className='load-weather'></div>
-						</div>
-					) : selectedUser ? (
-						<UserPreview
-							user={selectedUser}
-							onDetails={() => openUserProfile(selectedUser.id)}
-						/>
-					) : (
-						<div
-							style={{
-								minHeight: '460px',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								color: '#454652',
-								textAlign: 'center',
-							}}
-						>
-							Выберите пользователя из списка
-						</div>
-					)}
-				</div>
+				{!isMobile && (
+					<div
+						style={{
+							width: '36%',
+							backgroundColor: '#fff',
+							borderRadius: '24px',
+							border: '1px solid #D3E4FE',
+							padding: '28px',
+							boxShadow: '#24389c14 0px 4px 12px',
+							alignSelf: 'flex-start',
+							minHeight: '520px',
+						}}
+					>
+						{detailsLoading ? (
+							<div
+								style={{
+									minHeight: '460px',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+								}}
+							>
+								<div className='load-weather'></div>
+							</div>
+						) : selectedUser ? (
+							<UserPreview
+								user={selectedUser}
+								onDetails={() => openUserProfile(selectedUser.id)}
+							/>
+						) : (
+							<div
+								style={{
+									minHeight: '460px',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									color: '#454652',
+									textAlign: 'center',
+								}}
+							>
+								Выберите пользователя из списка
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 		</>
 	)

@@ -212,3 +212,15 @@ body {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+@media (max-width: 768px) {
+	.itemList {
+		width: 100% !important;
+		height: auto !important;
+		overflow-y: visible !important;
+	}
+
+	.itemListWash {
+		width: 100% !important;
+	}
+}

@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@mantine/hooks'
 import { createFileRoute } from '@tanstack/react-router'
 import { BrushCleaning, Eye, Heater, Paintbrush, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -21,6 +22,7 @@ function RouteComponent() {
 	const [duties, setDuties] = useState<Duty[]>([])
 	const [loading, setLoading] = useState(true)
 	const [allStudents, setAllStudents] = useState<UserType[]>([])
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	useEffect(() => {
 		const fetchStudents = async () => {
@@ -182,30 +184,32 @@ function RouteComponent() {
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '12dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '12dvh',
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>Дежурства</h2>
-				<p style={{ color: '#454652' }}>Расписание на ближайшие 7 дней</p>
+				<p style={{ color: '#454652', marginTop: isMobile ? '4px' : undefined }}>
+					Расписание на ближайшие 7 дней
+				</p>
 			</div>
 
 			<div
 				style={{
-					height: '88dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '88dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
 					flexDirection: 'column',
 					gap: '24px',
 				}}
 			>
-				<div style={{ overflowY: 'auto' }}>
+				<div style={{ overflowY: isMobile ? 'visible' : 'auto' }}>
 					<div
 						style={{
 							backgroundColor: '#fff',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '24px',
+							padding: isMobile ? '16px' : '24px',
 							boxShadow: '#24389c14 0px 4px 12px',
 						}}
 					>
@@ -214,8 +218,8 @@ function RouteComponent() {
 								textAlign: 'center',
 								fontWeight: '600',
 								color: '#6060f0',
-								fontSize: '24px',
-								padding: '16px 0px 32px 0px',
+								fontSize: isMobile ? '20px' : '24px',
+								padding: isMobile ? '8px 0 20px 0' : '16px 0px 32px 0px',
 								textAlignLast: 'left',
 							}}
 						>
@@ -224,222 +228,233 @@ function RouteComponent() {
 
 						<div
 							style={{
-								display: 'grid',
-								gridTemplateColumns: 'repeat(7, 1fr)',
-								gap: '12px',
-								borderRadius: '24px',
+								overflowX: isMobile ? 'auto' : 'visible',
+								marginRight: isMobile ? '-16px' : 0,
+								paddingRight: isMobile ? '16px' : 0,
 							}}
 						>
-							{dates.map(date => {
-								const dayDuties = dutiesByDate[date] || []
-								const today = isToday(date)
-								const isMyDuty = dayDuties.some(
-									duty => duty.student.id === currentUser?.id,
-								)
+							<div
+								style={{
+									display: 'grid',
+									gridTemplateColumns: 'repeat(7, 1fr)',
+									gap: isMobile ? '8px' : '12px',
+									borderRadius: '24px',
+									minWidth: isMobile ? '600px' : 'auto',
+								}}
+							>
+								{dates.map(date => {
+									const dayDuties = dutiesByDate[date] || []
+									const today = isToday(date)
+									const isMyDuty = dayDuties.some(
+										duty => duty.student.id === currentUser?.id,
+									)
 
-								return (
-									<div
-										key={date}
-										style={{
-											backgroundColor: today
-												? '#6060f0'
-												: isMyDuty
-													? '#E8F0FE'
-													: '#eff4ff',
-											borderRadius: '16px',
-											border: 'none',
-											padding: '16px',
-											height: '100%',
-											width: '80%',
-											minHeight: '120px',
-											transition: 'all 0.2s',
-											color: today ? '#fff' : '',
-											...(isMyDuty && !today
-												? {
-														position: 'relative',
-														zIndex: 0,
-														overflow: 'hidden',
-														boxShadow: 'none',
-													}
-												: {
-														border: today
-															? '2px solid #6060f0'
-															: '1px solid #D3E4FE',
-													}),
-										}}
-									>
-										{isMyDuty && !today && (
-											<div
-												style={{
-													content: '""',
-													position: 'absolute',
-													zIndex: -2,
-													left: '-50%',
-													top: '-50%',
-													width: '200%',
-													height: '200%',
-													background:
-														'conic-gradient(#BFE2FF, #6060f0, #BFE2FF, #6060f0, #BFE2FF)',
-													animation: 'spin 4s linear infinite',
-												}}
-											/>
-										)}
-										{isMyDuty && !today && (
-											<div
-												style={{
-													content: '""',
-													position: 'absolute',
-													zIndex: -1,
-													left: '3px',
-													top: '3px',
-													right: '3px',
-													bottom: '3px',
-													background: '#E8F0FE',
-													borderRadius: '13px',
-												}}
-											/>
-										)}
+									return (
 										<div
+											key={date}
 											style={{
-												position: 'relative',
-												zIndex: 1,
-												display: 'flex',
-												flexDirection: 'column',
+												backgroundColor: today
+													? '#6060f0'
+													: isMyDuty
+														? '#E8F0FE'
+														: '#eff4ff',
+												borderRadius: '16px',
+												border: 'none',
+												padding: isMobile ? '10px' : '16px',
 												height: '100%',
-												justifyContent: 'space-between',
+												width: '100%',
+												minHeight: isMobile ? '140px' : '120px',
+												transition: 'all 0.2s',
+												color: today ? '#fff' : '',
+												...(isMyDuty && !today
+													? {
+															position: 'relative',
+															zIndex: 0,
+															overflow: 'hidden',
+															boxShadow: 'none',
+														}
+													: {
+															border: today
+																? '2px solid #6060f0'
+																: '1px solid #D3E4FE',
+														}),
 											}}
 										>
-											<div>
+											{isMyDuty && !today && (
 												<div
 													style={{
-														fontSize: '20px',
-														fontWeight: '600',
-														color: today ? '#fff' : '#333',
-														marginBottom: '8px',
-														display: 'flex',
-														justifyContent: 'space-between',
-														alignItems: 'center',
+														content: '""',
+														position: 'absolute',
+														zIndex: -2,
+														left: '-50%',
+														top: '-50%',
+														width: '200%',
+														height: '200%',
+														background:
+															'conic-gradient(#BFE2FF, #6060f0, #BFE2FF, #6060f0, #BFE2FF)',
+														animation: 'spin 4s linear infinite',
 													}}
-												>
-													<span
-														style={{
-															fontSize: '20px',
-															color: today ? '#fff' : '#6060f0',
-															fontWeight: '600',
-														}}
-													>
-														{formatDate(date)}
-													</span>
-													<span
-														style={{
-															fontSize: '18px',
-															color: today ? '#fff' : '#666',
-															fontWeight: '400',
-														}}
-													>
-														{getDayOfWeek(date).slice(0, 2)}
-													</span>
-												</div>
-											</div>
-
+												/>
+											)}
+											{isMyDuty && !today && (
+												<div
+													style={{
+														content: '""',
+														position: 'absolute',
+														zIndex: -1,
+														left: '3px',
+														top: '3px',
+														right: '3px',
+														bottom: '3px',
+														background: '#E8F0FE',
+														borderRadius: '13px',
+													}}
+												/>
+											)}
 											<div
 												style={{
+													position: 'relative',
+													zIndex: 1,
 													display: 'flex',
 													flexDirection: 'column',
-													borderRadius: '8px',
-													alignItems: 'flex-start',
+													height: '100%',
+													justifyContent: 'space-between',
 												}}
 											>
-												{dayDuties.length > 0 ? (
-													dayDuties.map(duty => (
-														<div
-															key={duty.id}
-															style={{
-																gap: '6px',
-																fontSize: '11px',
-															}}
-														>
-															<div
-																style={{
-																	fontWeight: '500',
-																	color: today ? '#fff' : '#0B1C30',
-																	fontSize: '14px',
-																	display: 'flex',
-																	flexDirection: 'column',
-																	alignItems: 'flex-start',
-																	gap: '2px',
-																}}
-															>
-																{duty.student?.photo ? (
-																	<img
-																		src={duty.student.photo}
-																		alt=''
-																		style={{
-																			width: '80px',
-																			height: '80px',
-																			borderRadius: '50%',
-																			marginBottom: '8px',
-																			objectFit: 'cover',
-																		}}
-																	/>
-																) : (
-																	<User
-																		size={50}
-																		color={today ? '#fff' : '#6060f0'}
-																		style={{ marginBottom: '16px' }}
-																	/>
-																)}
-
-																<div>
-																	<h3
-																		style={{
-																			fontSize: '14px',
-																			fontWeight: '600',
-																			margin: 0,
-																		}}
-																	>
-																		{duty.student.name} <br />
-																		{duty.student.surname}
-																	</h3>
-																</div>
-															</div>
-															<div
-																style={{
-																	marginTop: '8px',
-																	fontSize: '12px',
-																	fontWeight: '600',
-																	color: today ? '#d8dced' : '#454652',
-																}}
-															>
-																Блок {duty.student.block} (
-																{duty.student.room_type})
-															</div>
-														</div>
-													))
-												) : (
+												<div>
 													<div
 														style={{
-															textAlign: 'center',
-															color: '#999',
-															fontSize: '11px',
-															padding: '8px',
+															fontSize: isMobile ? '14px' : '20px',
+															fontWeight: '600',
+															color: today ? '#fff' : '#333',
+															marginBottom: '8px',
+															display: 'flex',
+															justifyContent: 'space-between',
+															alignItems: 'center',
 														}}
 													>
-														—
+														<span
+															style={{
+																fontSize: isMobile ? '14px' : '20px',
+																color: today ? '#fff' : '#6060f0',
+																fontWeight: '600',
+															}}
+														>
+															{formatDate(date)}
+														</span>
+														<span
+															style={{
+																fontSize: isMobile ? '11px' : '18px',
+																color: today ? '#fff' : '#666',
+																fontWeight: '400',
+															}}
+														>
+															{getDayOfWeek(date).slice(0, 2)}
+														</span>
 													</div>
-												)}
+												</div>
+
+												<div
+													style={{
+														display: 'flex',
+														flexDirection: 'column',
+														borderRadius: '8px',
+														alignItems: 'flex-start',
+													}}
+												>
+													{dayDuties.length > 0 ? (
+														dayDuties.map(duty => (
+															<div
+																key={duty.id}
+																style={{
+																	gap: '6px',
+																	fontSize: '11px',
+																}}
+															>
+																<div
+																	style={{
+																		fontWeight: '500',
+																		color: today ? '#fff' : '#0B1C30',
+																		fontSize: '14px',
+																		display: 'flex',
+																		flexDirection: 'column',
+																		alignItems: 'flex-start',
+																		gap: '2px',
+																	}}
+																>
+																	{duty.student?.photo ? (
+																		<img
+																			src={duty.student.photo}
+																			alt=''
+																			style={{
+																				width: isMobile ? '48px' : '80px',
+																				height: isMobile ? '48px' : '80px',
+																				borderRadius: '50%',
+																				marginBottom: '8px',
+																				objectFit: 'cover',
+																			}}
+																		/>
+																	) : (
+																		<User
+																			size={isMobile ? 32 : 50}
+																			color={today ? '#fff' : '#6060f0'}
+																			style={{ marginBottom: '8px' }}
+																		/>
+																	)}
+
+																	<div>
+																		<h3
+																			style={{
+																				fontSize: isMobile ? '11px' : '14px',
+																				fontWeight: '600',
+																				margin: 0,
+																			}}
+																		>
+																			{duty.student.name} <br />
+																			{duty.student.surname}
+																		</h3>
+																	</div>
+																</div>
+																{!isMobile && (
+																	<div
+																		style={{
+																			marginTop: '8px',
+																			fontSize: '12px',
+																			fontWeight: '600',
+																			color: today ? '#d8dced' : '#454652',
+																		}}
+																	>
+																		Блок {duty.student.block} (
+																		{duty.student.room_type})
+																	</div>
+																)}
+															</div>
+														))
+													) : (
+														<div
+															style={{
+																textAlign: 'center',
+																color: '#999',
+																fontSize: '11px',
+																padding: '8px',
+															}}
+														>
+															—
+														</div>
+													)}
+												</div>
 											</div>
 										</div>
-									</div>
-								)
-							})}
+									)
+								})}
+							</div>
 						</div>
 					</div>
 				</div>
 
 				<div
 					style={{
-						width: '30%',
+						width: isMobile ? '100%' : '30%',
 						display: 'flex',
 						flexDirection: 'column',
 						gap: '48px',
@@ -501,3 +516,4 @@ function RouteComponent() {
 		</div>
 	)
 }
+

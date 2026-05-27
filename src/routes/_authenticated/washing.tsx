@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@mantine/hooks'
 import { createFileRoute } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import {
@@ -48,6 +49,7 @@ function RouteComponent() {
 	const [machineToDelete, setMachineToDelete] =
 		useState<WashingMachineType | null>(null)
 	const { alertModal, openAlert } = useUniversalAlert()
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	const freeCount = machines.filter(m => m.status === 'free').length
 	const busyCount = machines.filter(m => m.status === 'busy').length
@@ -271,6 +273,10 @@ function RouteComponent() {
 		)
 	}
 
+	const cardWidth = isMobile ? 'calc(50% - 6px)' : 'calc(33.33% - 8px)'
+	const cardHeight = isMobile ? '260px' : '340px'
+	const iconPadding = isMobile ? '20px 20px 16px 20px' : '32px 32px 24px 32px'
+
 	return (
 		<>
 			<DeleteMachineModal
@@ -287,18 +293,20 @@ function RouteComponent() {
 				onClose={() => setProblemModalOpened(false)}
 			/>
 			{alertModal}
+
 			<div
 				style={{
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '20dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '20dvh',
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
+					gap: isMobile ? '8px' : '0',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>Прачечная</h2>
 				<p style={{ color: '#454652' }}>Проверьте наличие свободных машин</p>
-				<div style={{ color: '#454652', display: 'flex', gap: '36px' }}>
+				<div style={{ color: '#454652', display: 'flex', gap: isMobile ? '16px' : '36px', flexWrap: 'wrap' }}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 						<div
 							style={{
@@ -334,11 +342,13 @@ function RouteComponent() {
 					</div>
 				</div>
 			</div>
+
 			<div
 				style={{
-					height: '80dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '80dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
+					flexDirection: isMobile ? 'column' : 'row',
 					justifyContent: 'space-between',
 					gap: '24px',
 				}}
@@ -346,7 +356,7 @@ function RouteComponent() {
 				<div
 					className='itemListWash'
 					style={{
-						width: '70%',
+						width: isMobile ? '100%' : '70%',
 						display: 'flex',
 						flexWrap: 'wrap',
 						gap: '12px',
@@ -366,12 +376,12 @@ function RouteComponent() {
 								<div
 									key={machine.id}
 									style={{
-										width: 'calc(33.33% - 8px)',
-										height: '340px',
+										width: cardWidth,
+										height: cardHeight,
 										backgroundColor: '#fff',
 										borderRadius: '24px',
 										border: '1px solid #D3E4FE',
-										padding: '24px',
+										padding: isMobile ? '16px' : '24px',
 										boxShadow: '#24389c14 0px 4px 12px',
 										color: '#0B1C30',
 										display: 'flex',
@@ -392,7 +402,7 @@ function RouteComponent() {
 											}}
 										>
 											<Trash2
-												size={24}
+												size={isMobile ? 20 : 24}
 												color='#999'
 												onClick={e => {
 													e.stopPropagation()
@@ -418,7 +428,7 @@ function RouteComponent() {
 										}
 										style={{
 											backgroundColor: styles.bgColor,
-											padding: '32px 32px 24px 32px',
+											padding: iconPadding,
 											borderRadius: '50%',
 											cursor:
 												currentUser?.role === 'employee' &&
@@ -462,7 +472,7 @@ function RouteComponent() {
 										}}
 									>
 										<IconComponent
-											size={48}
+											size={isMobile ? 36 : 48}
 											color={styles.iconColor}
 											className='machine-icon'
 											style={{ transition: 'opacity 0.3s ease' }}
@@ -470,7 +480,7 @@ function RouteComponent() {
 										{currentUser?.role === 'employee' &&
 											machine.status !== 'broken' && (
 												<Wrench
-													size={48}
+													size={isMobile ? 36 : 48}
 													color='#BA1A1A'
 													className='wrench-icon'
 													style={{
@@ -485,7 +495,7 @@ function RouteComponent() {
 											)}
 									</div>
 									<div style={{ textAlign: 'center' }}>
-										<h2 style={{ fontSize: '16px', fontWeight: '600' }}>
+										<h2 style={{ fontSize: isMobile ? '13px' : '16px', fontWeight: '600' }}>
 											{machine.name}
 										</h2>
 										<div
@@ -493,14 +503,15 @@ function RouteComponent() {
 												display: 'flex',
 												flexDirection: 'row',
 												justifyContent: 'center',
-												marginTop: '16px',
+												marginTop: '8px',
 												alignContent: 'center',
 												gap: '8px',
+												flexWrap: 'wrap',
 											}}
 										>
 											<p
 												style={{
-													fontSize: '18px',
+													fontSize: isMobile ? '14px' : '18px',
 													color:
 														machine.status === 'free'
 															? '#00cc66'
@@ -515,7 +526,7 @@ function RouteComponent() {
 											{machine.status === 'busy' && isCurrentUserOccupier && (
 												<p
 													style={{
-														fontSize: '18px',
+														fontSize: isMobile ? '14px' : '18px',
 														color: '#603B00',
 														fontWeight: '600',
 													}}
@@ -620,8 +631,8 @@ function RouteComponent() {
 						<div
 							onClick={() => addMachine()}
 							style={{
-								width: 'calc(33.33% - 8px)',
-								height: '340px',
+								width: cardWidth,
+								height: cardHeight,
 								backgroundColor: '#fff',
 								borderRadius: '24px',
 								border: '2px dashed #D3E4FE',
@@ -645,8 +656,8 @@ function RouteComponent() {
 						>
 							<div
 								style={{
-									width: '80px',
-									height: '80px',
+									width: isMobile ? '60px' : '80px',
+									height: isMobile ? '60px' : '80px',
 									borderRadius: '50%',
 									backgroundColor: '#E5EEFF',
 									display: 'flex',
@@ -654,13 +665,14 @@ function RouteComponent() {
 									justifyContent: 'center',
 								}}
 							>
-								<Plus size={40} color='#6060f0' />
+								<Plus size={isMobile ? 28 : 40} color='#6060f0' />
 							</div>
 							<span
 								style={{
 									color: '#6060f0',
-									fontSize: '16px',
+									fontSize: isMobile ? '13px' : '16px',
 									fontWeight: '500',
+									textAlign: 'center',
 								}}
 							>
 								Добавить машину
@@ -668,13 +680,14 @@ function RouteComponent() {
 						</div>
 					)}
 				</div>
+
 				<div
 					style={{
 						display: 'flex',
-						width: '30%',
+						width: isMobile ? '100%' : '30%',
 						justifyContent: 'flex-start',
 						flexDirection: 'column',
-						height: '100%',
+						height: isMobile ? 'auto' : '100%',
 						gap: '24px',
 					}}
 				>

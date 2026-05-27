@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@mantine/hooks'
 import { createFileRoute } from '@tanstack/react-router'
 import {
 	AlertCircle,
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_authenticated/profile')({
 
 function RouteComponent() {
 	const [incorrectModalOpened, setIncorrectModalOpened] = useState(false)
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	const user = auth.getUser()
 	console.log(user)
@@ -52,20 +54,22 @@ function RouteComponent() {
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '12dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '12dvh',
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>Профиль</h2>
-				<p style={{ color: '#454652' }}>Ваша личная информация</p>
+				<p style={{ color: '#454652', marginTop: isMobile ? '4px' : undefined }}>
+					Ваша личная информация
+				</p>
 			</div>
 
 			<div
 				style={{
-					height: '88dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '88dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
-					flexDirection: 'row',
+					flexDirection: isMobile ? 'column' : 'row',
 					justifyContent: 'space-between',
 					gap: '24px',
 				}}
@@ -76,11 +80,13 @@ function RouteComponent() {
 							backgroundColor: '#fff',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '32px',
+							padding: isMobile ? '20px' : '32px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							marginBottom: '24px',
 							display: 'flex',
+							flexDirection: isMobile ? 'column' : 'row',
 							width: '100%',
+							alignItems: isMobile ? 'center' : 'flex-start',
 						}}
 					>
 						<div
@@ -88,14 +94,14 @@ function RouteComponent() {
 								display: 'flex',
 								alignItems: 'center',
 								gap: '16px',
-								width: '20%',
-								paddingRight: '32px',
+								width: isMobile ? '100%' : '20%',
+								paddingRight: isMobile ? '0' : '32px',
+								paddingBottom: isMobile ? '20px' : '0',
 								justifyContent: 'center',
 							}}
 						>
 							<div
 								style={{
-									// backgroundColor: '#E5EEFF',
 									padding: user?.photo ? '0px' : '36px',
 									borderRadius: '50%',
 									display: 'flex',
@@ -108,8 +114,8 @@ function RouteComponent() {
 										src={user?.photo}
 										alt='Фото профиля'
 										style={{
-											width: '140px',
-											height: '140px',
+											width: isMobile ? '100px' : '140px',
+											height: isMobile ? '100px' : '140px',
 											borderRadius: '50%',
 											objectFit: 'cover',
 										}}
@@ -132,9 +138,11 @@ function RouteComponent() {
 									display: 'flex',
 									flexDirection: 'column',
 									width: '100%',
+									alignItems: isMobile ? 'center' : 'flex-start',
+									textAlign: isMobile ? 'center' : 'left',
 								}}
 							>
-								<h2 style={{ fontSize: '24px', fontWeight: '600' }}>
+								<h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '600' }}>
 									{user?.surname} {user?.name} {user?.middle_name}
 								</h2>
 
@@ -147,16 +155,16 @@ function RouteComponent() {
 									display: 'flex',
 									justifyContent: 'space-between',
 									width: '100%',
-									flexDirection: isStudent ? 'row' : 'column',
+									flexDirection: 'column',
 									flexWrap: 'wrap',
-									gap: '42px',
+									gap: isMobile ? '12px' : '42px',
 								}}
 							>
 								{isStudent && (
 									<div
 										style={{
 											backgroundColor: '#F8F9FF',
-											width: '20%',
+											width: '100%',
 											borderRadius: '12px',
 										}}
 									>
@@ -196,7 +204,7 @@ function RouteComponent() {
 								<div
 									style={{
 										backgroundColor: '#F8F9FF',
-										width: isStudent ? '70%' : '60%',
+										width: '100%',
 										borderRadius: '12px',
 									}}
 								>
@@ -220,12 +228,13 @@ function RouteComponent() {
 												display: 'flex',
 												flexDirection: 'column',
 												justifyContent: 'center',
+												minWidth: 0,
 											}}
 										>
 											<div style={{ color: '#454652', fontSize: '14px' }}>
 												Почта
 											</div>
-											<div style={{ fontWeight: '600', fontSize: '18px' }}>
+											<div style={{ fontWeight: '600', fontSize: '18px', overflowWrap: 'anywhere' }}>
 												{user?.email}
 											</div>
 										</div>
@@ -235,7 +244,7 @@ function RouteComponent() {
 								<div
 									style={{
 										backgroundColor: '#F8F9FF',
-										width: isStudent ? '55%' : '60%',
+										width: '100%',
 										borderRadius: '12px',
 									}}
 								>
@@ -275,7 +284,7 @@ function RouteComponent() {
 									<div
 										style={{
 											backgroundColor: '#F8F9FF',
-											width: '30%',
+											width: '100%',
 											borderRadius: '12px',
 										}}
 									>
@@ -322,7 +331,7 @@ function RouteComponent() {
 									backgroundColor: '#fff',
 									borderRadius: '24px',
 									border: '1px solid #D3E4FE',
-									padding: '32px',
+									padding: isMobile ? '20px' : '32px',
 									boxShadow: '#24389c14 0px 4px 12px',
 								}}
 							>
@@ -376,7 +385,7 @@ function RouteComponent() {
 
 				<div
 					style={{
-						width: '30%',
+						width: isMobile ? '100%' : '30%',
 						display: 'flex',
 						flexDirection: 'column',
 						gap: '48px',
@@ -388,7 +397,7 @@ function RouteComponent() {
 							backgroundColor: '#fff',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '36px',
+							padding: isMobile ? '24px' : '36px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							color: '#0B1C30',
 							display: 'flex',

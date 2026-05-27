@@ -1,5 +1,5 @@
 import { Modal } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Plus, ShieldCheck, SquarePen, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -63,6 +63,7 @@ function RouteComponent() {
 		description: '',
 	})
 	const { alertModal, openAlert } = useUniversalAlert()
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	const user = auth.getUser()
 	const isEmployee = user?.role === 'employee'
@@ -259,34 +260,44 @@ function RouteComponent() {
 				news={newsToEdit}
 			/>
 			{alertModal}
+
 			<div
 				style={{
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'space-evenly',
-					height: '12dvh',
-					paddingLeft: '48px',
+					height: isMobile ? 'auto' : '12dvh',
+					minHeight: isMobile ? 'unset' : undefined,
+					padding: isMobile ? '20px 16px 12px' : '0 48px',
 				}}
 			>
 				<h2 style={{ color: '#6060f0' }}>
 					{welcome}, {user?.name}
 				</h2>
-				<p style={{ color: '#454652' }}>
+				<p style={{ color: '#454652', marginTop: isMobile ? '4px' : undefined }}>
 					Вот, что происходит в общежитии сегодня
 				</p>
 			</div>
 
 			<div
 				style={{
-					height: '88dvh',
-					padding: '16px 48px',
+					height: isMobile ? 'auto' : '88dvh',
+					padding: isMobile ? '8px 16px 24px' : '16px 48px',
 					display: 'flex',
-					flexDirection: 'row',
+					flexDirection: isMobile ? 'column' : 'row',
 					justifyContent: 'space-between',
 					gap: '24px',
 				}}
 			>
-				<div className='itemList' style={{ flex: 1, overflowY: 'auto' }}>
+				<div
+					className='itemList'
+					style={{
+						flex: isMobile ? 'none' : 1,
+						width: isMobile ? '100%' : undefined,
+						height: isMobile ? 'auto' : undefined,
+						overflowY: isMobile ? 'visible' : 'auto',
+					}}
+				>
 					{news.map(item => {
 						const isExpanded = expandedNews.includes(item.id)
 						const shouldTruncate = item.content.length > 500
@@ -300,7 +311,7 @@ function RouteComponent() {
 									backgroundColor: '#fff',
 									borderRadius: '24px',
 									border: '1px solid #D3E4FE',
-									padding: '24px',
+									padding: isMobile ? '16px' : '24px',
 									color: '#0B1C30',
 									marginBottom: '20px',
 									transition: '0.2s linear',
@@ -311,6 +322,8 @@ function RouteComponent() {
 										display: 'flex',
 										justifyContent: 'space-between',
 										alignItems: 'center',
+										flexWrap: 'wrap',
+										gap: '8px',
 									}}
 								>
 									<div
@@ -348,12 +361,12 @@ function RouteComponent() {
 											</div>
 										</div>
 									</div>
-									<div style={{ display: 'flex', gap: '24px' }}>
+									<div style={{ display: 'flex', gap: isMobile ? '12px' : '24px', alignItems: 'center' }}>
 										{isEmployee && (
 											<div
 												style={{
 													display: 'flex',
-													gap: '16px',
+													gap: '12px',
 													alignItems: 'center',
 												}}
 											>
@@ -511,10 +524,10 @@ function RouteComponent() {
 
 				<div
 					style={{
-						width: '30%',
+						width: isMobile ? '100%' : '30%',
 						display: 'flex',
 						flexDirection: 'column',
-						gap: '48px',
+						gap: isMobile ? '16px' : '48px',
 					}}
 				>
 					{user?.role === 'student' && nextDuty && (
@@ -607,7 +620,7 @@ function RouteComponent() {
 							backgroundColor: '#EFF4FF',
 							borderRadius: '24px',
 							border: '1px solid #D3E4FE',
-							padding: '36px',
+							padding: isMobile ? '24px' : '36px',
 							boxShadow: '#24389c14 0px 4px 12px',
 							color: '#0B1C30',
 							display: 'flex',
