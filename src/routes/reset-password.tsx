@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { CheckCircle, Eye, EyeOff } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { UniversalModal } from '../components/UniversalModal'
 import api from '../lib/api'
 
@@ -30,7 +30,7 @@ function RouteComponent() {
 		navigate({ to: '/auth/login' })
 	}
 
-	const handlePasswordResetConfirm = async (e: FormEvent) => {
+	const handlePasswordResetConfirm = async (e: { preventDefault(): void }) => {
 		e.preventDefault()
 		setMessage('')
 		setErrorMessage('')
@@ -81,17 +81,7 @@ function RouteComponent() {
 			>
 				<form
 					onSubmit={handlePasswordResetConfirm}
-					style={{
-						backgroundColor: '#fff',
-						borderRadius: '32px',
-						padding: '56px',
-						width: '30dvw',
-						height: '100%',
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '24px',
-						boxShadow: '#c3c3c3 0px 0px 20px 1px',
-					}}
+					className='auth-card'
 				>
 					<h1>Новый пароль</h1>
 					<p

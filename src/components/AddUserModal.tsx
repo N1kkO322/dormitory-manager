@@ -1,4 +1,5 @@
 import { Modal } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { UserPlus } from 'lucide-react'
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { useState } from 'react'
@@ -117,19 +118,25 @@ function toOptionalNumber(value: string) {
 function FormSection({
 	title,
 	columns,
+	mobileColumns,
+	isMobile,
 	children,
 }: {
 	title: string
 	columns: string
+	mobileColumns?: string
+	isMobile: boolean
 	children: ReactNode
 }) {
+	const effectiveColumns = isMobile ? (mobileColumns ?? '1fr') : columns
+
 	return (
 		<section style={sectionStyle}>
 			<h3 style={sectionTitleStyle}>{title}</h3>
 			<div
 				style={{
 					display: 'grid',
-					gridTemplateColumns: columns,
+					gridTemplateColumns: effectiveColumns,
 					gap: '14px',
 					alignItems: 'end',
 				}}
@@ -147,6 +154,7 @@ export function AddUserModal({
 	submitting,
 }: AddUserModalProps) {
 	const [form, setForm] = useState<NewUserForm>(emptyForm)
+	const isMobile = useMediaQuery('(max-width: 768px)') ?? false
 
 	const handleClose = () => {
 		setForm(emptyForm)
@@ -198,11 +206,11 @@ export function AddUserModal({
 			opened={opened}
 			onClose={handleClose}
 			title='Добавить пользователя'
-			size='70%'
+			size={isMobile ? '95%' : '70%'}
 			centered
 			radius='16px'
-			padding='28px'
-			styles={{ title: { fontWeight: 700, fontSize: '24px' } }}
+			padding={isMobile ? '16px' : '28px'}
+			styles={{ title: { fontWeight: 700, fontSize: isMobile ? '20px' : '24px' } }}
 		>
 			<form
 				onSubmit={handleSubmit}
@@ -215,11 +223,16 @@ export function AddUserModal({
 				<div
 					style={{
 						display: 'grid',
-						gridTemplateColumns: 'minmax(360px, 0.7fr) minmax(280px, 0.3fr)',
+						gridTemplateColumns: isMobile ? '1fr' : 'minmax(360px, 0.7fr) minmax(280px, 0.3fr)',
 						gap: '16px',
 					}}
 				>
-					<FormSection title='Доступ' columns='220px minmax(220px, 1fr)'>
+					<FormSection
+						title='Доступ'
+						columns='220px minmax(220px, 1fr)'
+						mobileColumns='1fr 1fr'
+						isMobile={isMobile}
+					>
 						<label style={formLabelStyle}>
 							Роль
 							<select
@@ -250,7 +263,11 @@ export function AddUserModal({
 						</label>
 					</FormSection>
 
-					<FormSection title='Фото' columns='minmax(220px, 1fr)'>
+					<FormSection
+						title='Фото'
+						columns='minmax(220px, 1fr)'
+						isMobile={isMobile}
+					>
 						<label style={formLabelStyle}>
 							Фото
 							<input
@@ -274,7 +291,12 @@ export function AddUserModal({
 					</FormSection>
 				</div>
 
-				<FormSection title='ФИО' columns='repeat(3, minmax(180px, 1fr))'>
+				<FormSection
+					title='ФИО'
+					columns='repeat(3, minmax(180px, 1fr))'
+					mobileColumns='1fr'
+					isMobile={isMobile}
+				>
 					<label style={formLabelStyle}>
 						Фамилия
 						<input
@@ -309,7 +331,12 @@ export function AddUserModal({
 					</label>
 				</FormSection>
 
-				<FormSection title='Контакты' columns='minmax(260px, 1fr) minmax(220px, 320px)'>
+				<FormSection
+					title='Контакты'
+					columns='minmax(260px, 1fr) minmax(220px, 320px)'
+					mobileColumns='1fr'
+					isMobile={isMobile}
+				>
 					<label style={formLabelStyle}>
 						Почта
 						<input
@@ -340,6 +367,8 @@ export function AddUserModal({
 						<FormSection
 							title='Размещение'
 							columns='minmax(160px, 220px) 90px 150px 110px 150px'
+							mobileColumns='1fr 1fr'
+							isMobile={isMobile}
 						>
 							<label style={formLabelStyle}>
 								Группа
@@ -407,6 +436,8 @@ export function AddUserModal({
 						<FormSection
 							title='Экстренный контакт'
 							columns='minmax(240px, 1fr) minmax(220px, 280px) minmax(180px, 240px)'
+							mobileColumns='1fr'
+							isMobile={isMobile}
 						>
 							<label style={formLabelStyle}>
 								ФИО экстренного контакта
@@ -464,6 +495,7 @@ export function AddUserModal({
 						onClick={handleClose}
 						disabled={submitting}
 						style={{
+							flex: isMobile ? 1 : undefined,
 							padding: '12px 20px',
 							borderRadius: '12px',
 							border: '1px solid #D3E4FE',
@@ -481,8 +513,10 @@ export function AddUserModal({
 						type='submit'
 						disabled={submitting}
 						style={{
+							flex: isMobile ? 1 : undefined,
 							display: 'flex',
 							alignItems: 'center',
+							justifyContent: 'center',
 							gap: '8px',
 							padding: '12px 20px',
 							borderRadius: '12px',
