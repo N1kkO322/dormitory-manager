@@ -56,19 +56,7 @@ function RouteComponent() {
 			>
 				<form
 					onSubmit={handleLogin}
-					style={{
-						backgroundColor: '#fff',
-						borderRadius: '32px',
-						padding: '56px',
-						width: '30dvw',
-						// width: '60%', Laptop
-						// width: '90%', Mobile
-						height: '100%',
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '24px',
-						boxShadow: '#c3c3c3 0px 0px 20px 1px',
-					}}
+					className='auth-card'
 				>
 					<h1>С возвращением!</h1>
 					<p

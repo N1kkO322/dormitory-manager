@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import api from '../../lib/api'
 
 export const Route = createFileRoute('/auth/forgotpass')({
@@ -13,7 +13,7 @@ function RouteComponent() {
 	const [errorMessage, setErrorMessage] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	const handlePasswordResetRequest = async (e: FormEvent) => {
+	const handlePasswordResetRequest = async (e: { preventDefault(): void }) => {
 		e.preventDefault()
 		setMessage('')
 		setErrorMessage('')
@@ -49,17 +49,7 @@ function RouteComponent() {
 			>
 				<form
 					onSubmit={handlePasswordResetRequest}
-					style={{
-						backgroundColor: '#fff',
-						borderRadius: '32px',
-						padding: '56px',
-						width: '30dvw',
-						height: '100%',
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '24px',
-						boxShadow: '#c3c3c3 0px 0px 20px 1px',
-					}}
+					className='auth-card'
 				>
 					<h1>Восстановление пароля</h1>
 					<p
