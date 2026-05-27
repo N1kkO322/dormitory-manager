@@ -46,7 +46,10 @@ function AuthenticatedLayout() {
 
 	useEffect(() => {
 		api.get('/api/users/').then(response => {
-			const students = response.data.filter(
+			const data = Array.isArray(response.data)
+				? response.data
+				: response.data?.results ?? []
+			const students = data.filter(
 				(u: UserType) => u.role === 'student',
 			)
 			if (students.length === 0) return
@@ -304,6 +307,41 @@ function AuthenticatedLayout() {
 							DorMan
 						</span>
 					</div>
+
+					{todayDuty && (isEmployee || isMyDutyToday) && (
+						<div
+							style={{
+								position: 'absolute',
+								left: '50%',
+								transform: 'translateX(-50%)',
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px',
+								backgroundColor: isMyDutyToday ? '#FFE5E5' : '#E5EEFF',
+								border: `1px solid ${isMyDutyToday ? '#e74c3c' : '#D3E4FE'}`,
+								borderRadius: '20px',
+								padding: '4px 10px 4px 8px',
+								whiteSpace: 'nowrap',
+							}}
+						>
+							<AlertCircle
+								size={15}
+								color={isMyDutyToday ? '#e74c3c' : '#6060f0'}
+							/>
+							<span
+								style={{
+									fontSize: '12px',
+									fontWeight: '600',
+									color: isMyDutyToday ? '#e74c3c' : '#6060f0',
+								}}
+							>
+								{isMyDutyToday
+									? 'Ваше дежурство'
+									: `${todayDuty.name} ${todayDuty.surname}`}
+							</span>
+						</div>
+					)}
+
 					<button
 						onClick={() => setMenuOpen(prev => !prev)}
 						style={{

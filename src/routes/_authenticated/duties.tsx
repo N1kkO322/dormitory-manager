@@ -28,7 +28,10 @@ function RouteComponent() {
 		const fetchStudents = async () => {
 			try {
 				const response = await api.get('/api/users/')
-				const students = response.data.filter(
+				const data = Array.isArray(response.data)
+					? response.data
+					: response.data?.results ?? []
+				const students = data.filter(
 					(user: UserType) => user.role === 'student',
 				)
 				setAllStudents(students)
@@ -42,11 +45,11 @@ function RouteComponent() {
 	}, [])
 
 	useEffect(() => {
-		if (allStudents.length > 0 && currentUser) {
+		if (allStudents.length > 0) {
 			const generatedDuties = generateDutiesForTwoWeeks(allStudents)
 			setDuties(generatedDuties)
 		}
-	}, [allStudents, currentUser?.id])
+	}, [allStudents])
 
 	const refreshData = () => {
 		if (currentUser) {
